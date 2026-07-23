@@ -1,0 +1,113 @@
+# Registro central de todos os sites monitorados.
+# Rode qualquer um com: python scripts/sync_site.py --site <chave>
+#
+# Campos:
+#   metodo:
+#     vtex        -> site VTEX, usa a API pública de catálogo (scripts/sync_vtex_brand.py)
+#     scrapy      -> site comum, usa o spider padrão (crawler/spiders/price_spider.py)
+#                    com a lista de URLs filtrada a partir do sitemap
+#     html_bulk   -> site que bloqueia o Scrapy (impressão digital do Twisted),
+#                    usa requests puro (scripts/sync_html_bulk.py)
+#     itemlist_bulk -> página lista vários produtos de uma vez (JSON-LD ItemList,
+#                    ex: catálogo por veículo compatível), usa requests puro
+#                    (scripts/sync_itemlist_bulk.py)
+#   domain: URL base do site (sem barra no final)
+#   marca: (só method=vtex) slug da marca no VTEX; omitir = catálogo inteiro
+#   busca: (só method=vtex, alternativa a marca) lista de termos de busca livre
+#          (map=ft) -- usar quando o site não marca produtos com atributo de
+#          marca específico (ex: loja generalista que também vende peça de trator)
+#   filtro: lista de termos -- só processa produtos que batem em pelo menos um
+#           (omitir = catálogo inteiro, só usado em html_bulk/scrapy)
+#   filtro_modo: (só method=scrapy)
+#     url     (padrão) -- filtra pelo texto da própria URL do produto (rápido)
+#     titulo  -- abre cada página e olha nome/marca do JSON-LD antes de decidir
+#                (mais lento, necessário quando a URL não reflete a marca --
+#                 ex: newpecasoficial usa slugs curtos tipo "/porca")
+
+# ---- VTEX ----
+
+agrotrator:
+  metodo: vtex
+  domain: https://www.agrotrator.com.br
+  marca: cnh
+
+fornecedoramaquinas:
+  metodo: vtex
+  domain: https://www.fornecedoramaquinas.com.br
+  # loja 100% Case -- sem marca aqui = extrai o catálogo inteiro
+
+fornecedoraagro:
+  metodo: vtex
+  domain: https://www.fornecedoraagro.com.br
+  # loja 100% New Holland/CNH -- sem marca aqui = extrai o catálogo inteiro
+
+carpaltratores:
+  metodo: vtex
+  domain: https://loja.carpaltratores.com.br
+  # loja 100% CNH (confirmado pelo usuário), 166.612 produtos -- sem marca = catálogo inteiro
+
+pitstop:
+  metodo: vtex
+  domain: https://www.pitstop.com.br
+  # loja generalista de autopeças (280 mil produtos) -- marca "case" só tem 1 item,
+  # usa busca por texto livre em vez de marca (map=ft)
+  busca: ["new holland", "case ih", "trator case"]
+
+# ---- Scrapy (spider padrão + filtro por URL) ----
+
+tratorlin:
+  metodo: scrapy
+  domain: https://www.loja.tratorlin.com.br
+  filtro: [case, new-holland]
+
+acamargo:
+  metodo: scrapy
+  domain: https://www.acamargo.com
+  filtro: [cnh, "-case-", new-holland, newholland, "-nh-"]
+
+superagrosc:
+  metodo: scrapy
+  domain: https://www.superagrosc.com.br
+  filtro: [case, new-holland, newholland]
+
+tratormag:
+  metodo: scrapy
+  domain: https://tratormag.com.br
+  filtro: [case, new-holland, newholland, cnh]
+
+jerdrones:
+  metodo: scrapy
+  domain: https://jerdrones.com.br
+  # loja de drones (concorrente do projeto de drones, não trator) -- 420
+  # produtos, sem filtro de marca = catálogo inteiro (marca não é dimensão
+  # relevante em drone)
+
+# ---- Scrapy (filtro por título/marca -- URL não indica marca nesse site) ----
+
+newpecasoficial:
+  metodo: scrapy
+  domain: https://www.newpecasoficial.com.br
+  filtro: [cnh, case, "new holland", "new holand"]
+  filtro_modo: titulo
+
+# ---- HTML bulk (Scrapy bloqueado, usa requests puro) ----
+
+engepecas:
+  metodo: html_bulk
+  domain: https://engepecas.com.br
+  filtro: [case, cnh, new-holland]
+
+# ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
+
+paccini:
+  metodo: itemlist_bulk
+  domain: https://www.paccini.com.br
+  filtro: ["veiculos/case", "veiculos/new-holland"]
+  # plataforma FBits; páginas /veiculos/marca/modelo listam peças compatíveis
+  # via ItemList no JSON-LD, com preço já embutido -- ~20% das páginas têm
+  # produto, ~2.6 itens em média quando têm
+
+# ---- Bloqueados / pendentes (não rodar ainda -- ver PLANO.md) ----
+# rohrmaquinas.com.br -- precisa Playwright (Fase 6)
+# usaparts.com.br -- preço só visível com login, fora de escopo
+# Mercado Livre -- API restrita a apps certificados + anti-bot no HTML (Fase 7)

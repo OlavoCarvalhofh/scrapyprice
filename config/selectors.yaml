@@ -1,0 +1,32 @@
+# Fallback de seletores CSS por domínio.
+#
+# Só é usado quando o site NÃO expõe dado estruturado (JSON-LD/OG/microdata),
+# ou para completar campos que o structured não traz (ex: preço "de", parcelas).
+#
+# Como descobrir o seletor: abra a página no navegador > F12 (DevTools) >
+# clique com o botão direito no elemento do preço > "Copiar seletor".
+# Use "::text" no fim para pegar só o texto, ou "::attr(content)" para atributos.
+#
+# A chave é o domínio EXATO (o que aparece depois de https:// e antes da primeira /).
+#
+# ---- EXEMPLO (ajuste aos sites reais que você for monitorar) ----
+#
+# loja.exemplo.com.br:
+#   preco: "span.price-now::text"
+#   preco_de: "span.price-old::text"
+#   produto: "h1.product-title::text"
+#   disponibilidade: "div.stock-status::text"
+#
+# Deixe vazio se todos os seus sites expõem dado estruturado (o caso mais comum).
+
+www.loja.tratorlin.com.br:
+  preco: "span.product-big-price::text"
+  preco_de: "span.product-scratched-price::text"
+  preco_a_vista: "span.desconto_avista::text"
+  produto: "h1.product-name::text"
+  disponibilidade: "[itemprop='availability']::attr(href)"
+
+www.prosperadistribuicao.com.br:
+  preco: "[itemprop='price']::attr(content)"
+  produto: "h3.nome_produto::text"
+  disponibilidade: "[itemprop='availability']::attr(content)"

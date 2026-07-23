@@ -1,0 +1,5 @@
+# Cole aqui um link por linha. Linhas começando com # são ignoradas.
+# Exemplos (troque pelos produtos reais que você quer monitorar):
+
+# https://loja.caseih.com.br/algum-produto
+# https://loja.newhollandag.com.br/algum-produto

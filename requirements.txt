@@ -1,0 +1,8 @@
+scrapy>=2.11
+extruct>=0.16
+w3lib>=2.1
+parsel>=1.9
+PyYAML>=6.0
+SQLAlchemy>=2.0
+brotli>=1.1
+requests>=2.31
