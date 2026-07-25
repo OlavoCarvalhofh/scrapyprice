@@ -199,6 +199,18 @@ agroshopbr:
   # item vazio antes do Offer de verdade) -- corrigido em
   # crawler/extractors/structured.py (_first_dict), com teste de regressão
 
+lojaododrone:
+  metodo: scrapy
+  domain: https://www.lojaododrone.com.br
+  filtro: ["/p/"]
+  # robots.txt permissivo (Allow: /, sem bloqueio de bot). Sitemap simples
+  # (sem sitemapindex) mistura páginas institucionais (/about, /pricing,
+  # /category/*) com produtos de verdade em /p/<slug> -- filtro restringe
+  # só aos produtos. Loja especializada em drone agrícola (DJI Agras E
+  # marca XAG, concorrente chinesa da DJI nesse nicho) -- 275 produtos,
+  # catálogo inteiro relevante, sem filtro de marca (mesmo padrão do
+  # jerdrones/premierdrones/dronedireto). JSON-LD limpo, sem seletor CSS
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:

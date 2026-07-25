@@ -155,6 +155,12 @@ Deixar o crawler robusto para rodar sem supervisão.
       `metodo: scrapy`, loja generalista agro que também vende a linha DJI Agras -- 21317 URLs no
       catálogo, 33 batem no filtro. Validado com spider real (2/2 produtos). Rodada completa
       disparada em background
+- [x] **lojaododrone.com.br mapeado** — plataforma própria (não awsli/Magento), robots.txt
+      permissivo. Sitemap simples mistura páginas institucionais com produtos em `/p/<slug>` --
+      `filtro: ["/p/"]` restringe só aos produtos. Loja especializada em drone agrícola: DJI Agras
+      **e também XAG** (concorrente chinesa da DJI nesse nicho, não vista em nenhum site anterior)
+      -- 275 produtos, catálogo inteiro relevante, sem filtro de marca. JSON-LD limpo, sem seletor
+      CSS novo. Validado com spider real (2/2 produtos). Rodada completa disparada em background
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/
