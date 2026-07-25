@@ -107,7 +107,9 @@ Deixar o crawler robusto para rodar sem supervisão.
 - [ ] Rodar de novo os 9 sites acima pra backfill do SKU nos registros já coletados (a correção
       só vale pra coletas novas — os registros antigos ficam com `sku` vazio até rodar de novo)
 - [ ] Rodar por alguns dias (já na VPS, via Kestra) e conferir se o histórico está sendo gravado como esperado (série temporal, sem sobrescrita)
-- [ ] Relatório de URLs "quebradas": hoje quando não acha preço só loga um warning e descarta — consolidar numa lista/arquivo das URLs que falharam na última rodada, pra saber quando um site mudou o layout e precisa de novo seletor CSS
+- [x] Relatório de URLs "quebradas" — `crawler/relatorio_falhas.py`, grava
+      `logs/urls_quebradas/<site>.json` (URLs sem preço ou com erro de rede na última rodada,
+      sobrescreve por site). Ligado no spider (`price_spider.py`) e no `sync_html_bulk.py`
 
 ## Fase 3 — Dashboard visual
 - [x] **Versão funcional inicial pronta** (antes do design final, pra já ter algo visível):
