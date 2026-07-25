@@ -107,6 +107,17 @@ Deixar o crawler robusto para rodar sem supervisão.
       pelo mesmo motivo). Loja de drones (concorrente do projeto de drones, não trator, como o
       `jerdrones`) -- 343 produtos, sem filtro de marca = catálogo inteiro. Teste com 5 produtos:
       5/5 salvos. Rodada completa dos 343 disparada em background
+- [x] **goldrones.com.br mapeado** — WordPress/WooCommerce (tema Phlox + Elementor), sem
+      JSON-LD/OG/microdata nenhum (nem preço vem estruturado). `metodo: scrapy` (robots.txt
+      permissivo, sem bloqueio de bot como agripecas/premierdrones) com `filtro: ["/produto/"]`
+      pra ignorar posts/páginas/taxonomias/usuários que o `wp-sitemap.xml` também lista.
+      Seletores CSS novos em `config/selectors.yaml` (preço com/sem promoção via `<del>/<ins>`
+      vs `<span>` direto num `id` único do bloco de preço; disponibilidade via classe
+      instock/outofstock no wrapper do Elementor, não no `<body>` como eu tentei primeiro --
+      corrigido depois de testar). 2 testes de regressão novos em `tests/test_custom.py` (36
+      testes no total). Loja de drones agrícolas DJI Agras (concorrente do projeto de drones),
+      300 produtos, sem filtro de marca. Validado com spider real (2/2 produtos, robots.txt OK).
+      Rodada completa disparada em background
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/

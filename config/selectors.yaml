@@ -30,3 +30,18 @@ www.prosperadistribuicao.com.br:
   preco: "[itemprop='price']::attr(content)"
   produto: "h3.nome_produto::text"
   disponibilidade: "[itemprop='availability']::attr(content)"
+
+goldrones.com.br:
+  # WooCommerce (Elementor) sem JSON-LD/OG/microdata nenhum -- nem preço
+  # aparece em dado estruturado, só em HTML puro (mais o data layer do
+  # plugin "Pixel Manager for WooCommerce" em JS solto, sem usar aqui).
+  # #woo-custom-installments-product-price é o ID único do bloco de preço
+  # do produto principal (nunca aparece nos cards de "relacionados"),
+  # cobre os dois formatos: com promoção (<del>/<ins>) e sem (<span> direto)
+  preco: "#woo-custom-installments-product-price ins .woocommerce-Price-amount bdi::text, #woo-custom-installments-product-price > span.woocommerce-Price-amount bdi::text"
+  preco_de: "#woo-custom-installments-product-price del .woocommerce-Price-amount bdi::text"
+  produto: "h1.product_title::text"
+  # o wrapper do Elementor pro template de produto único carrega a classe
+  # de estoque (instock/outofstock) do WooCommerce -- só aparece uma vez
+  # por página (os cards de "relacionados" usam outro marcador HTML)
+  disponibilidade: "div[data-elementor-type='product']::attr(class)"

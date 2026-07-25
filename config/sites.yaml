@@ -82,6 +82,19 @@ jerdrones:
   # produtos, sem filtro de marca = catálogo inteiro (marca não é dimensão
   # relevante em drone)
 
+goldrones:
+  metodo: scrapy
+  domain: https://goldrones.com.br
+  filtro: ["/produto/"]
+  # WordPress/WooCommerce -- o sitemap índice (wp-sitemap.xml) lista posts,
+  # páginas, taxonomias e até usuários junto dos produtos, então o filtro
+  # por URL restringe só ao que importa. robots.txt permissivo (sem bloqueio
+  # de bot), então method=scrapy funciona normal, diferente do agripecas/
+  # premierdrones. Sem JSON-LD/OG/microdata -- seletores CSS em
+  # config/selectors.yaml (preço/produto/disponibilidade). Loja de drones
+  # agrícolas DJI Agras (concorrente do projeto de drones), 300 produtos,
+  # sem filtro de marca = catálogo inteiro
+
 prosperadistribuicao:
   metodo: scrapy
   domain: https://www.prosperadistribuicao.com.br

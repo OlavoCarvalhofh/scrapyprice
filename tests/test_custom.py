@@ -44,3 +44,42 @@ def test_prosperadistribuicao_seletores_reais():
     assert data["produto"] == "DRONE DJI MATRICE 4T"
     assert data["disponibilidade"] == "InStock"
     assert data["fonte_extracao"] == "css"
+
+
+def test_goldrones_seletores_reais_com_promocao():
+    html = """
+    <html><body>
+    <div data-elementor-type="product" class="product type-product instock sale">
+    <h1 class="product_title">Drone DJI Agras T50 + Controle</h1>
+    <p id="woo-custom-installments-product-price" class="price">
+    <del><span class="woocommerce-Price-amount amount"><bdi><span class="woocommerce-Price-currencySymbol">R$</span>110.000,00</bdi></span></del>
+    <ins><span class="woocommerce-Price-amount amount"><bdi><span class="woocommerce-Price-currencySymbol">R$</span>79.990,00</bdi></span></ins>
+    </p>
+    </div>
+    </body></html>
+    """
+    data = extract_custom(html, "goldrones.com.br")
+    assert data["preco"] == 79990.0
+    assert data["preco_de"] == 110000.0
+    assert data["produto"] == "Drone DJI Agras T50 + Controle"
+    assert data["disponibilidade"] == "InStock"
+    assert data["fonte_extracao"] == "css"
+
+
+def test_goldrones_seletores_reais_sem_promocao():
+    """Sem <del>/<ins> quando o produto não está em promoção -- preço direto
+    num <span> filho do mesmo <p>."""
+    html = """
+    <html><body>
+    <div data-elementor-type="product" class="product type-product instock">
+    <h1 class="product_title">Tampa do Tanque Dji Agras</h1>
+    <p id="woo-custom-installments-product-price" class="price">
+    <span class="woocommerce-Price-amount amount"><bdi><span class="woocommerce-Price-currencySymbol">R$</span>59,00</bdi></span>
+    </p>
+    </div>
+    </body></html>
+    """
+    data = extract_custom(html, "goldrones.com.br")
+    assert data["preco"] == 59.0
+    assert "preco_de" not in data
+    assert data["disponibilidade"] == "InStock"
