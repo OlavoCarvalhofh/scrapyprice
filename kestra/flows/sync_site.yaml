@@ -1,0 +1,108 @@
+# Flow único e parametrizado (input "site") em vez de um flow por site --
+# a lógica de execução é idêntica pra todos, só muda o nome; um gatilho de
+# agendamento por site abaixo cobre o "um por site" do PLANO.md sem duplicar
+# o flow 14 vezes.
+#
+# Pré-requisito: a imagem `price-crawler:latest` já construída localmente
+# (docker compose build crawler) -- o Kestra usa o socket do Docker do host
+# (montado em /var/run/docker.sock) pra rodar um container novo dessa imagem,
+# na mesma rede do docker-compose (price-crawler_default) pra conseguir
+# resolver o hostname "postgres".
+#
+# Testar disparo manual: UI do Kestra (localhost:8080 via túnel SSH) -> Flows
+# -> price-crawler.sync-site -> Execute, escolhendo o input "site".
+id: sync-site
+namespace: price-crawler
+
+inputs:
+  - id: site
+    type: STRING
+    defaults: agrotrator
+
+tasks:
+  - id: rodar_sync
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: price-crawler:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      networkMode: price-crawler_default
+      pullPolicy: NEVER
+    env:
+      PRICE_DB_URL: "{{ envs.price_db_url }}"
+    commands:
+      - python scripts/sync_site.py --site {{ inputs.site }}
+
+# Gatilhos escalonados de 20 em 20 min (madrugada, fora do horário comercial)
+# -- evita rodar os 14 sites ao mesmo tempo. Ajustar o cron se o timezone do
+# servidor não for o esperado (ver Fase 1 do PLANO.md).
+triggers:
+  - id: agrotrator_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *"
+    inputs:
+      site: agrotrator
+  - id: fornecedoramaquinas_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "20 2 * * *"
+    inputs:
+      site: fornecedoramaquinas
+  - id: fornecedoraagro_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "40 2 * * *"
+    inputs:
+      site: fornecedoraagro
+  - id: carpaltratores_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 * * *"
+    inputs:
+      site: carpaltratores
+  - id: pitstop_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "20 3 * * *"
+    inputs:
+      site: pitstop
+  - id: tratorlin_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "40 3 * * *"
+    inputs:
+      site: tratorlin
+  - id: acamargo_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 4 * * *"
+    inputs:
+      site: acamargo
+  - id: superagrosc_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "20 4 * * *"
+    inputs:
+      site: superagrosc
+  - id: tratormag_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "40 4 * * *"
+    inputs:
+      site: tratormag
+  - id: jerdrones_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 5 * * *"
+    inputs:
+      site: jerdrones
+  - id: prosperadistribuicao_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "20 5 * * *"
+    inputs:
+      site: prosperadistribuicao
+  - id: newpecasoficial_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "40 5 * * *"
+    inputs:
+      site: newpecasoficial
+  - id: engepecas_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 6 * * *"
+    inputs:
+      site: engepecas
+  - id: paccini_diario
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "20 6 * * *"
+    inputs:
+      site: paccini

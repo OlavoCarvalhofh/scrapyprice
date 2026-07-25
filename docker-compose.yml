@@ -34,6 +34,9 @@ services:
         condition: service_healthy
     entrypoint: ["/bin/bash", "-c", "sleep 5 && /app/kestra server standalone"]
     environment:
+      # exposto nos flows como {{ envs.price_db_url }} (Kestra >= 0.23 só
+      # autocarrega env vars com prefixo ENV_, ver kestra/flows/sync_site.yaml)
+      ENV_PRICE_DB_URL: postgresql://${POSTGRES_USER:-crawler}:${POSTGRES_PASSWORD}@postgres:5432/precos
       KESTRA_CONFIGURATION: |
         datasources:
           postgres:

@@ -72,7 +72,22 @@ Deixar o crawler robusto para rodar sem supervisão.
       documentando as variáveis. **Serviço `postgres` testado subindo de verdade localmente**
       (ver item da Fase 0 acima); Kestra ainda não testado
 - [ ] Acessar a interface do Kestra (porta 8080) só via **túnel SSH** — não expor direto pra internet sem autenticação na frente
-- [ ] Criar os **flows YAML** no Kestra — um por site (ou um flow com tarefas paralelas), cada um chamando `python scripts/sync_site.py --site <nome>` dentro do container do crawler, com gatilho de agendamento (substitui o cron)
+- [x] Criar os **flows YAML** no Kestra — `kestra/flows/sync_site.yaml`: um flow único parametrizado
+      (input `site`) em vez de 14 flows duplicados, chamando `python scripts/sync_site.py --site
+      <nome>` dentro do container do crawler (`price-crawler:latest`, rede `price-crawler_default`
+      pra resolver o hostname `postgres`) via Docker task runner do Kestra. 14 gatilhos de
+      agendamento (um por site, escalonados de 20 em 20min a partir das 2h) substituem o cron.
+      **Ainda NÃO testado disparando de verdade** -- o Docker Desktop local travou 3 vezes
+      seguidas hoje tentando validar isso (erro de `vpnkit-bridge`, cache de imagem corrompido,
+      e depois a própria `docker build` clássica travando parada no meio, sem erro) -- parece um
+      problema mais profundo no WSL2 dessa máquina, não algo resolvido só reiniciando o app.
+      Decisão: não insistir mais localmente por hoje; validar disparo manual de verdade só quando
+      a VPS existir (ambiente limpo, Fase 1) ou depois que o Docker Desktop local for investigado
+      à parte
+- [ ] Investigar a instabilidade do Docker Desktop local (WSL2) -- fora do escopo do projeto em
+      si, mas bloqueou a validação local de Postgres+Kestra hoje; se for mexer de novo, considerar
+      `wsl --shutdown` seguido de reabrir, ou como último recurso um reset mais profundo (que
+      apaga containers/imagens/volumes de TODOS os projetos Docker nessa máquina, não só este)
 - [ ] Validar timezone do servidor (pra bater com o horário desejado nas coletas)
 - [ ] Testar uma coleta manual (via Kestra, disparo manual do flow) antes de deixar no agendamento automático
 
