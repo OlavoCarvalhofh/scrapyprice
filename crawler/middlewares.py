@@ -15,8 +15,12 @@ USER_AGENTS = [
 
 
 class RotateUserAgentMiddleware:
-    """Sorteia um User-Agent realista por requisição."""
+    """Sorteia um User-Agent realista por requisição.
 
-    def process_request(self, request, spider):
+    Sem o parâmetro `spider` (padrão novo do Scrapy 2.17+, evita
+    ScrapyDeprecationWarning -- ver crawler/pipelines.py pro mesmo ajuste).
+    """
+
+    def process_request(self, request):
         request.headers["User-Agent"] = random.choice(USER_AGENTS)
         return None

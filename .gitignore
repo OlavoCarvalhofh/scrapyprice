@@ -1,6 +1,12 @@
 .env
 db/precos.db
+db/precos.db-shm
+db/precos.db-wal
 __pycache__/
 *.pyc
 .venv/
 venv/
+.locks/
+logs/
+dashboard/index.html
+.pytest_cache/

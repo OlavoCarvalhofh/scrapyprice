@@ -25,8 +25,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
 os.chdir(BASE_DIR)  # garante que sqlite:///db/precos.db aponta pro lugar certo
 
+from crawler.lockutil import adquirir_lock
+from crawler.logging_config import configurar_logging
+
 # aponta o Scrapy para o settings do projeto
 os.environ.setdefault("SCRAPY_SETTINGS_MODULE", "crawler.settings")
+
+configurar_logging()
 
 
 def carregar_urls(caminho="urls.txt"):
@@ -65,9 +70,20 @@ def main():
     random.shuffle(urls)  # ordem aleatória a cada rodada
     print(f"Coletando {len(urls)} URL(s)...")
 
-    process = CrawlerProcess(get_project_settings())
-    process.crawl("price", urls=urls)
-    process.start()
+    # trava só pro caso de lote/arquivo (agendado) -- teste avulso com --url
+    # não precisa, é sempre manual e não corre risco real de sobreposição
+    lock = None
+    if not args.url:
+        nome_lock = f"run_{os.path.splitext(os.path.basename(args.arquivo))[0]}"
+        lock = adquirir_lock(nome_lock)
+
+    try:
+        process = CrawlerProcess(get_project_settings())
+        process.crawl("price", urls=urls)
+        process.start()
+    finally:
+        if lock:
+            lock.release()
 
 
 if __name__ == "__main__":

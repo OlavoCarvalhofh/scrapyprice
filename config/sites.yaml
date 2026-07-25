@@ -82,6 +82,12 @@ jerdrones:
   # produtos, sem filtro de marca = catálogo inteiro (marca não é dimensão
   # relevante em drone)
 
+prosperadistribuicao:
+  metodo: scrapy
+  domain: https://www.prosperadistribuicao.com.br
+  # catálogo pequeno (~140 urls, ~130 sem contar blog) -- sem filtro, roda tudo.
+  # ~62 urls são página de blog/categoria sem preço (warning "sem preço", inofensivo)
+
 # ---- Scrapy (filtro por título/marca -- URL não indica marca nesse site) ----
 
 newpecasoficial:

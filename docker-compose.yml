@@ -1,0 +1,73 @@
+# Stack completo pra VPS: banco de preços + Kestra (agendamento/orquestração)
+# + a imagem do crawler pronta pro Kestra disparar.
+#
+# Antes de subir:
+#   1. Copie .env.example pra .env e preencha POSTGRES_PASSWORD (senha forte)
+#   2. docker compose up -d
+#   3. Acesse o Kestra só via túnel SSH (porta 8080 fica só em localhost aqui,
+#      de propósito -- ver Fase 1 do PLANO.md)
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: precos
+      POSTGRES_USER: ${POSTGRES_USER:-crawler}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/init-postgres-databases.sh:/docker-entrypoint-initdb.d/init-postgres-databases.sh:ro
+    ports:
+      - "127.0.0.1:5432:5432"  # só localhost; abrir pra fora (ex: Databricks) é decisão separada, com IP restrito
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crawler}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kestra:
+    image: kestra/kestra:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c", "sleep 5 && /app/kestra server standalone"]
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: ${POSTGRES_USER:-crawler}
+            password: ${POSTGRES_PASSWORD}
+        kestra:
+          server:
+            basicAuth:
+              enabled: false
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              basePath: "/app/storage"
+          queue:
+            type: postgres
+    volumes:
+      - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:8080:8080"  # só localhost -- acessar via túnel SSH
+
+  crawler:
+    build: .
+    image: price-crawler:latest
+    profiles: ["build-only"]  # não sobe sozinho; existe só pra imagem ficar disponível pro Kestra usar
+    environment:
+      PRICE_DB_URL: postgresql://${POSTGRES_USER:-crawler}:${POSTGRES_PASSWORD}@postgres:5432/precos
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:
+  kestra-data:

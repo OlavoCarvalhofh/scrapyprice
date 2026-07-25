@@ -72,9 +72,23 @@ def _walk_jsonld_products(node):
             yield from _walk_jsonld_products(item)
 
 
+def _extrair_sku(node):
+    """Prioriza sku > mpn > gtin (13/8/12/14) > productID -- sku costuma ser o
+    código mais consistentemente preenchido pelas plataformas de e-commerce."""
+    for campo in ("sku", "mpn", "gtin13", "gtin", "gtin8", "gtin12", "gtin14", "productID"):
+        valor = _first(node.get(campo))
+        if valor:
+            return str(valor)
+    return None
+
+
 def _parse_produto_jsonld(product):
     offers = _first(product.get("offers"))
     out = {"produto": product.get("name"), "url": product.get("url")}
+
+    sku = _extrair_sku(product)
+    if sku:
+        out["sku"] = sku
 
     img = product.get("image")
     out["imagem_url"] = _first(img) if img else None
@@ -160,19 +174,26 @@ def _from_opengraph(og_list):
 
 
 def _from_microdata(items):
+    """extruct (uniform=True) devolve os itemprops direto no nível principal
+    do item (sem uma chave "properties" envolvendo) -- diferente do formato
+    não-uniform. Bug real encontrado por teste: a versão antiga procurava
+    "properties" e nunca achava nada em produção."""
     for it in items or []:
-        props = it.get("properties", {})
-        if "price" in props or "offers" in props:
-            out = {"produto": _first(props.get("name"))}
-            offers = _first(props.get("offers"))
-            price = None
-            if isinstance(offers, dict):
-                price = offers.get("properties", {}).get("price")
-            price = price or props.get("price")
-            out["preco"] = _to_float(_first(price))
-            if out.get("preco") is not None:
-                out["fonte_extracao"] = "microdata"
-                return {k: v for k, v in out.items() if v is not None}
+        if "price" not in it and "offers" not in it:
+            continue
+        out = {"produto": _first(it.get("name"))}
+        sku = _extrair_sku(it)
+        if sku:
+            out["sku"] = sku
+        offers = _first(it.get("offers"))
+        price = None
+        if isinstance(offers, dict):
+            price = offers.get("price")
+        price = price or it.get("price")
+        out["preco"] = _to_float(_first(price))
+        if out.get("preco") is not None:
+            out["fonte_extracao"] = "microdata"
+            return {k: v for k, v in out.items() if v is not None}
     return {}
 
 

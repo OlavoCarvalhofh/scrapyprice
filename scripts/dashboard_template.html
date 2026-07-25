@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard de Preços — Concorrentes</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --status-good:    #0ca30c;
+    --status-critical:#d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --status-good:    #0ca30c;
+      --status-critical:#e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --status-good:    #0ca30c;
+    --status-critical:#e66767;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .viz-root { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .subtitulo { color: var(--text-secondary); font-size: 13px; margin: 0 0 20px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .tile .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+  .tile .value { font-size: 24px; font-weight: 600; font-variant-numeric: proportional-nums; }
+
+  .filtros { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filtros input, .filtros select {
+    font-family: inherit; font-size: 13px; padding: 7px 10px;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface-1); color: var(--text-primary);
+  }
+  .filtros input[type="text"] { flex: 1; min-width: 200px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface-1); border-radius: 8px; overflow: hidden; }
+  thead th {
+    text-align: left; font-size: 12px; color: var(--text-secondary); font-weight: 600;
+    padding: 10px 12px; border-bottom: 1px solid var(--gridline); cursor: pointer; user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--text-primary); }
+  tbody td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid var(--gridline); }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: color-mix(in srgb, var(--series-1) 6%, transparent); }
+  .preco { font-variant-numeric: tabular-nums; }
+  .preco-de { color: var(--text-muted); text-decoration: line-through; font-variant-numeric: tabular-nums; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-instock { background: color-mix(in srgb, var(--status-good) 15%, transparent); color: var(--status-good); }
+  .badge-outofstock { background: color-mix(in srgb, var(--status-critical) 15%, transparent); color: var(--status-critical); }
+  .badge-outro { background: var(--gridline); color: var(--text-secondary); }
+
+  .paginacao { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+  .paginacao button {
+    font-family: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface-1); color: var(--text-primary); cursor: pointer;
+  }
+  .paginacao button:disabled { opacity: 0.4; cursor: default; }
+
+  .painel {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: none; align-items: center; justify-content: center; z-index: 10;
+  }
+  .painel.aberto { display: flex; }
+  .painel-conteudo {
+    background: var(--surface-1); border-radius: 10px; padding: 20px;
+    width: min(700px, 92vw); max-height: 85vh; overflow: auto;
+  }
+  .painel-topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .painel-titulo { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .painel-sub { font-size: 12px; color: var(--text-secondary); }
+  .painel-fechar {
+    border: none; background: transparent; font-size: 20px; cursor: pointer; color: var(--text-secondary); line-height: 1;
+  }
+  .toggle-tabela { font-size: 12px; color: var(--series-1); cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; }
+
+  svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .eixo-linha { stroke: var(--baseline); stroke-width: 1; }
+  .grade-linha { stroke: var(--gridline); stroke-width: 1; }
+  .serie-linha { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .serie-ponto { fill: var(--series-1); stroke: var(--surface-1); stroke-width: 2; }
+  .eixo-texto { fill: var(--text-muted); font-size: 11px; }
+  .valor-final { fill: var(--text-primary); font-size: 12px; font-weight: 600; }
+  .crosshair { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+  .tooltip-grupo { pointer-events: none; }
+  .tooltip-fundo { fill: var(--text-primary); opacity: 0.92; rx: 4; }
+  .tooltip-texto { fill: var(--surface-1); font-size: 11px; }
+
+  .historico-tabela { width: 100%; font-size: 12px; margin-top: 8px; }
+  .historico-tabela td { padding: 4px 8px; border-bottom: 1px solid var(--gridline); }
+
+  @media (max-width: 640px) {
+    table thead { display: none; }
+    tbody tr { display: block; border-bottom: 4px solid var(--page-plane); }
+    tbody td { display: flex; justify-content: space-between; }
+    tbody td::before { content: attr(data-rotulo); color: var(--text-secondary); font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <h1>Dashboard de Preços — Concorrentes</h1>
+  <p class="subtitulo" id="subtitulo"></p>
+
+  <div class="tiles">
+    <div class="tile"><div class="label">Produtos monitorados</div><div class="value" id="tile-produtos">—</div></div>
+    <div class="tile"><div class="label">Lojas</div><div class="value" id="tile-lojas">—</div></div>
+    <div class="tile"><div class="label">Registros no histórico</div><div class="value" id="tile-registros">—</div></div>
+    <div class="tile"><div class="label">Última coleta</div><div class="value" id="tile-ultima" style="font-size:16px;">—</div></div>
+  </div>
+
+  <div class="filtros">
+    <input type="text" id="busca" placeholder="Buscar produto...">
+    <select id="filtro-loja"><option value="">Todas as lojas</option></select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th data-campo="loja">Loja</th>
+        <th data-campo="produto">Produto</th>
+        <th data-campo="preco">Preço</th>
+        <th data-campo="disponibilidade">Disponibilidade</th>
+        <th data-campo="atualizado">Atualizado em</th>
+      </tr>
+    </thead>
+    <tbody id="corpo-tabela"></tbody>
+  </table>
+
+  <div class="paginacao">
+    <span id="info-pagina"></span>
+    <div>
+      <button id="btn-anterior">← Anterior</button>
+      <button id="btn-proximo">Próximo →</button>
+    </div>
+  </div>
+
+  <div class="painel" id="painel">
+    <div class="painel-conteudo">
+      <div class="painel-topo">
+        <div>
+          <p class="painel-titulo" id="painel-produto"></p>
+          <p class="painel-sub" id="painel-loja"></p>
+        </div>
+        <button class="painel-fechar" id="painel-fechar">&times;</button>
+      </div>
+      <div id="painel-grafico"></div>
+      <button class="toggle-tabela" id="toggle-tabela">Ver como tabela</button>
+      <div id="painel-tabela" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRODUTOS = __PRODUTOS_JSON__;
+const HISTORICO = __HISTORICO_JSON__;
+const LOJAS = __LOJAS_JSON__;
+const RESUMO = __RESUMO_JSON__;
+
+const POR_PAGINA = 50;
+let estado = { pagina: 1, ordenarPor: "produto", ordenarAsc: true, busca: "", loja: "" };
+
+function formatarMoeda(v) {
+  if (v == null) return "";
+  return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function formatarData(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+function classeBadge(disp) {
+  if (disp === "InStock") return "badge-instock";
+  if (disp === "OutOfStock") return "badge-outofstock";
+  return "badge-outro";
+}
+
+function preencherResumo() {
+  document.getElementById("tile-produtos").textContent = RESUMO.total_produtos.toLocaleString("pt-BR");
+  document.getElementById("tile-lojas").textContent = RESUMO.total_lojas;
+  document.getElementById("tile-registros").textContent = RESUMO.total_registros.toLocaleString("pt-BR");
+  document.getElementById("tile-ultima").textContent = formatarData(RESUMO.ultima_coleta);
+  document.getElementById("subtitulo").textContent =
+    `${RESUMO.total_produtos.toLocaleString("pt-BR")} produtos em ${RESUMO.total_lojas} lojas — atualizado em ${formatarData(RESUMO.ultima_coleta)}`;
+
+  const sel = document.getElementById("filtro-loja");
+  for (const loja of LOJAS) {
+    const opt = document.createElement("option");
+    opt.value = loja; opt.textContent = loja;
+    sel.appendChild(opt);
+  }
+}
+
+function listaFiltradaOrdenada() {
+  let lista = PRODUTOS;
+  if (estado.loja) lista = lista.filter(p => p.loja === estado.loja);
+  if (estado.busca) {
+    const termo = estado.busca.toLowerCase();
+    lista = lista.filter(p => (p.produto || "").toLowerCase().includes(termo) || p.loja.toLowerCase().includes(termo));
+  }
+  const campo = estado.ordenarPor;
+  const dir = estado.ordenarAsc ? 1 : -1;
+  lista = [...lista].sort((a, b) => {
+    let va = a[campo], vb = b[campo];
+    if (typeof va === "string") va = va.toLowerCase();
+    if (typeof vb === "string") vb = vb.toLowerCase();
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (va < vb) return -1 * dir;
+    if (va > vb) return 1 * dir;
+    return 0;
+  });
+  return lista;
+}
+
+function renderizarTabela() {
+  const lista = listaFiltradaOrdenada();
+  const totalPaginas = Math.max(1, Math.ceil(lista.length / POR_PAGINA));
+  estado.pagina = Math.min(estado.pagina, totalPaginas);
+  const inicio = (estado.pagina - 1) * POR_PAGINA;
+  const pagina = lista.slice(inicio, inicio + POR_PAGINA);
+
+  const corpo = document.getElementById("corpo-tabela");
+  corpo.innerHTML = "";
+  for (const p of pagina) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-rotulo="Loja">${p.loja}</td>
+      <td data-rotulo="Produto">${p.produto || "(sem nome)"}</td>
+      <td data-rotulo="Preço" class="preco">${formatarMoeda(p.preco)}${p.preco_de ? `<br><span class="preco-de">${formatarMoeda(p.preco_de)}</span>` : ""}</td>
+      <td data-rotulo="Disponibilidade"><span class="badge ${classeBadge(p.disponibilidade)}">${p.disponibilidade || "—"}</span></td>
+      <td data-rotulo="Atualizado em">${formatarData(p.atualizado)}</td>
+    `;
+    tr.addEventListener("click", () => abrirPainel(p));
+    corpo.appendChild(tr);
+  }
+
+  document.getElementById("info-pagina").textContent =
+    `${lista.length.toLocaleString("pt-BR")} produto(s) — página ${estado.pagina} de ${totalPaginas}`;
+  document.getElementById("btn-anterior").disabled = estado.pagina <= 1;
+  document.getElementById("btn-proximo").disabled = estado.pagina >= totalPaginas;
+}
+
+function desenharGrafico(pontos) {
+  const largura = 640, altura = 260, margem = { topo: 20, baixo: 30, esq: 55, dir: 60 };
+  const w = largura - margem.esq - margem.dir;
+  const h = altura - margem.topo - margem.baixo;
+
+  const precos = pontos.map(p => p[1]);
+  const min = Math.min(...precos), max = Math.max(...precos);
+  const folga = (max - min) * 0.1 || max * 0.1 || 1;
+  const yMin = Math.max(0, min - folga), yMax = max + folga;
+
+  const datas = pontos.map(p => new Date(p[0]).getTime());
+  const xMin = Math.min(...datas), xMax = Math.max(...datas) || xMin + 1;
+
+  const x = t => margem.esq + (xMax === xMin ? w / 2 : (t - xMin) / (xMax - xMin) * w);
+  const y = v => margem.topo + h - (yMax === yMin ? h / 2 : (v - yMin) / (yMax - yMin) * h);
+
+  let svg = `<svg viewBox="0 0 ${largura} ${altura}" width="100%" style="max-width:100%;">`;
+
+  // gridlines horizontais (4 faixas)
+  for (let i = 0; i <= 3; i++) {
+    const v = yMin + (yMax - yMin) * i / 3;
+    svg += `<line class="grade-linha" x1="${margem.esq}" x2="${largura - margem.dir}" y1="${y(v)}" y2="${y(v)}" />`;
+    svg += `<text class="eixo-texto" x="${margem.esq - 8}" y="${y(v) + 4}" text-anchor="end">${formatarMoeda(v)}</text>`;
+  }
+  // eixo base
+  svg += `<line class="eixo-linha" x1="${margem.esq}" x2="${largura - margem.dir}" y1="${margem.topo + h}" y2="${margem.topo + h}" />`;
+
+  // linha da série
+  const caminho = pontos.map((p, i) => `${i === 0 ? "M" : "L"} ${x(new Date(p[0]).getTime())} ${y(p[1])}`).join(" ");
+  svg += `<path class="serie-linha" d="${caminho}" />`;
+
+  // marcador final + valor
+  const ultimo = pontos[pontos.length - 1];
+  const ux = x(new Date(ultimo[0]).getTime()), uy = y(ultimo[1]);
+  svg += `<circle class="serie-ponto" cx="${ux}" cy="${uy}" r="4.5" />`;
+  svg += `<text class="valor-final" x="${Math.min(ux + 8, largura - margem.dir - 2)}" y="${uy - 8}" text-anchor="${ux > largura - margem.dir - 60 ? "end" : "start"}">${formatarMoeda(ultimo[1])}</text>`;
+
+  // datas inicial/final no eixo x
+  svg += `<text class="eixo-texto" x="${margem.esq}" y="${altura - 8}" text-anchor="start">${new Date(pontos[0][0]).toLocaleDateString("pt-BR")}</text>`;
+  svg += `<text class="eixo-texto" x="${largura - margem.dir}" y="${altura - 8}" text-anchor="end">${new Date(ultimo[0]).toLocaleDateString("pt-BR")}</text>`;
+
+  svg += `<g class="hover-camada" data-w="${w}" data-esq="${margem.esq}" data-xmin="${xMin}" data-xmax="${xMax}"></g>`;
+  svg += `<rect x="${margem.esq}" y="${margem.topo}" width="${w}" height="${h}" fill="transparent" id="area-hover" />`;
+  svg += `</svg>`;
+  return { svg, escala: { x, y, xMin, xMax, margem, w, h } };
+}
+
+function abrirPainel(produto) {
+  document.getElementById("painel-produto").textContent = produto.produto || "(sem nome)";
+  document.getElementById("painel-loja").textContent = produto.loja;
+
+  const pontos = (HISTORICO[produto.url] || []).slice().sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  const grafico = document.getElementById("painel-grafico");
+
+  if (pontos.length === 0) {
+    grafico.innerHTML = "<p>Sem histórico suficiente ainda.</p>";
+  } else if (pontos.length === 1) {
+    grafico.innerHTML = `<p>Só uma coleta até agora: ${formatarMoeda(pontos[0][1])} em ${formatarData(pontos[0][0])}. Volte quando tiver mais histórico.</p>`;
+  } else {
+    const { svg } = desenharGrafico(pontos);
+    grafico.innerHTML = svg;
+    ativarHover(grafico, pontos);
+  }
+
+  const tabela = document.getElementById("painel-tabela");
+  tabela.innerHTML = "<table class='historico-tabela'>" +
+    pontos.slice().reverse().map(p => `<tr><td>${formatarData(p[0])}</td><td>${formatarMoeda(p[1])}</td></tr>`).join("") +
+    "</table>";
+  tabela.style.display = "none";
+  document.getElementById("toggle-tabela").textContent = "Ver como tabela";
+
+  document.getElementById("painel").classList.add("aberto");
+}
+
+function ativarHover(container, pontos) {
+  const svgEl = container.querySelector("svg");
+  const areaHover = container.querySelector("#area-hover");
+  const g = container.querySelector(".hover-camada");
+  const w = parseFloat(g.dataset.w), esq = parseFloat(g.dataset.esq);
+  const xMin = parseFloat(g.dataset.xmin), xMax = parseFloat(g.dataset.xmax);
+
+  let crosshair = null, tooltipGrupo = null;
+
+  areaHover.addEventListener("mousemove", (ev) => {
+    const rect = svgEl.getBoundingClientRect();
+    const viewBoxLargura = 640;
+    const escalaTela = viewBoxLargura / rect.width;
+    const xTela = (ev.clientX - rect.left) * escalaTela;
+    const t = xMin + (xTela - esq) / w * (xMax - xMin);
+
+    let maisProximo = pontos[0], menorDist = Infinity;
+    for (const p of pontos) {
+      const dist = Math.abs(new Date(p[0]).getTime() - t);
+      if (dist < menorDist) { menorDist = dist; maisProximo = p; }
+    }
+
+    const px = esq + (new Date(maisProximo[0]).getTime() - xMin) / (xMax - xMin || 1) * w;
+
+    if (crosshair) crosshair.remove();
+    if (tooltipGrupo) tooltipGrupo.remove();
+
+    const ns = "http://www.w3.org/2000/svg";
+    crosshair = document.createElementNS(ns, "line");
+    crosshair.setAttribute("class", "crosshair");
+    crosshair.setAttribute("x1", px); crosshair.setAttribute("x2", px);
+    crosshair.setAttribute("y1", 20); crosshair.setAttribute("y2", 210);
+    svgEl.appendChild(crosshair);
+
+    const texto = `${new Date(maisProximo[0]).toLocaleDateString("pt-BR")} — ${formatarMoeda(maisProximo[1])}`;
+    tooltipGrupo = document.createElementNS(ns, "g");
+    tooltipGrupo.setAttribute("class", "tooltip-grupo");
+    const larguraTexto = texto.length * 6 + 16;
+    const tx = Math.min(Math.max(px - larguraTexto / 2, 4), 640 - larguraTexto - 4);
+    tooltipGrupo.innerHTML = `<rect class="tooltip-fundo" x="${tx}" y="4" width="${larguraTexto}" height="18" />
+      <text class="tooltip-texto" x="${tx + 8}" y="17">${texto}</text>`;
+    svgEl.appendChild(tooltipGrupo);
+  });
+
+  areaHover.addEventListener("mouseleave", () => {
+    if (crosshair) crosshair.remove();
+    if (tooltipGrupo) tooltipGrupo.remove();
+  });
+}
+
+document.getElementById("painel-fechar").addEventListener("click", () => {
+  document.getElementById("painel").classList.remove("aberto");
+});
+document.getElementById("painel").addEventListener("click", (ev) => {
+  if (ev.target.id === "painel") ev.currentTarget.classList.remove("aberto");
+});
+document.getElementById("toggle-tabela").addEventListener("click", () => {
+  const tabela = document.getElementById("painel-tabela");
+  const grafico = document.getElementById("painel-grafico");
+  const mostrando = tabela.style.display !== "none";
+  tabela.style.display = mostrando ? "none" : "block";
+  grafico.style.display = mostrando ? "block" : "none";
+  document.getElementById("toggle-tabela").textContent = mostrando ? "Ver como tabela" : "Ver como gráfico";
+});
+
+document.querySelectorAll("thead th").forEach(th => {
+  th.addEventListener("click", () => {
+    const campo = th.dataset.campo;
+    if (estado.ordenarPor === campo) estado.ordenarAsc = !estado.ordenarAsc;
+    else { estado.ordenarPor = campo; estado.ordenarAsc = true; }
+    renderizarTabela();
+  });
+});
+document.getElementById("busca").addEventListener("input", (ev) => {
+  estado.busca = ev.target.value; estado.pagina = 1; renderizarTabela();
+});
+document.getElementById("filtro-loja").addEventListener("change", (ev) => {
+  estado.loja = ev.target.value; estado.pagina = 1; renderizarTabela();
+});
+document.getElementById("btn-anterior").addEventListener("click", () => { estado.pagina--; renderizarTabela(); });
+document.getElementById("btn-proximo").addEventListener("click", () => { estado.pagina++; renderizarTabela(); });
+
+preencherResumo();
+renderizarTabela();
+</script>
+</body>
+</html>

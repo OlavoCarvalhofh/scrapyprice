@@ -16,6 +16,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    event,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -61,7 +62,18 @@ class Coleta(Base):
 
 
 def get_engine(db_url="sqlite:///db/precos.db"):
-    return create_engine(db_url, echo=False, future=True)
+    engine = create_engine(db_url, echo=False, future=True)
+
+    if db_url.startswith("sqlite"):
+        # WAL permite ler e escrever ao mesmo tempo sem erro de "database is
+        # locked" -- importante já que rodamos vários sites em paralelo.
+        @event.listens_for(engine, "connect")
+        def _ativar_wal(conexao_dbapi, _):
+            cursor = conexao_dbapi.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.close()
+
+    return engine
 
 
 def init_db(engine):

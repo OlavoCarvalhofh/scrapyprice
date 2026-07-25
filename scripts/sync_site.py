@@ -20,6 +20,11 @@ sys.path.insert(0, BASE_DIR)
 os.chdir(BASE_DIR)
 os.environ.setdefault("SCRAPY_SETTINGS_MODULE", "crawler.settings")
 
+from crawler.lockutil import adquirir_lock
+from crawler.logging_config import configurar_logging
+
+configurar_logging()
+
 _SITES_CONFIG_PATH = os.path.join(BASE_DIR, "config", "sites.yaml")
 
 
@@ -159,7 +164,12 @@ def main():
 
     padrao_delay = {"vtex": 1.5, "html_bulk": 1.5, "itemlist_bulk": 1.0, "scrapy": None}
     delay = args.delay if args.delay is not None else padrao_delay[metodo]
-    _DISPATCH[metodo](cfg, delay)
+
+    lock = adquirir_lock(f"sync_{args.site}")
+    try:
+        _DISPATCH[metodo](cfg, delay)
+    finally:
+        lock.release()
 
 
 if __name__ == "__main__":
