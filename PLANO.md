@@ -102,7 +102,13 @@ Deixar o crawler robusto para rodar sem supervisão.
       (347 produtos, 16-18 batem no filtro `[case, new-holland, cnh]` -- peças de plataforma de
       colheitadeira). Rodado de verdade contra o banco: 15 salvos, 3 sem preço (1 é a página de
       categoria da marca, capturada pelo filtro por engano mas inofensiva -- só gera um warning)
-- [ ] Rodar `newpecasoficial` completo (179 produtos) — hoje só tem os 10 do teste inicial
+- [x] **premierdrones.com.br mapeado** (mesma plataforma "Loja Integrada"/awsli e mesmo bloco
+      `User-agent: Scrapy` -> `Disallow: /` do agripecas -- `metodo: html_bulk` + `delay: 10`
+      pelo mesmo motivo). Loja de drones (concorrente do projeto de drones, não trator, como o
+      `jerdrones`) -- 343 produtos, sem filtro de marca = catálogo inteiro. Teste com 5 produtos:
+      5/5 salvos. Rodada completa dos 343 disparada em background
+- [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
+      rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/
       pitstop/carpaltratores via VTEX já tinham SKU; os outros 9 estavam com a coluna vazia).
       Investigação achou o mesmo padrão de bug das duas vezes anteriores: o campo já vem pronto

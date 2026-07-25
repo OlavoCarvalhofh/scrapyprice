@@ -117,6 +117,16 @@ agripecas:
   # -- peças de plataforma de colheitadeira). Microdata (schema.org Product/
   # Offer) já traz produto/sku/preço prontos, sem precisar de seletor CSS
 
+premierdrones:
+  metodo: html_bulk
+  domain: https://www.premierdrones.com.br
+  delay: 10
+  # mesma plataforma "Loja Integrada" (awsli) do agripecas, mesmo bloco
+  # "User-agent: Scrapy" -> Disallow: / no robots.txt -- mesmo motivo de
+  # usar html_bulk + delay:10. Loja de drones (concorrente do projeto de
+  # drones, não trator, como o jerdrones) -- 343 produtos, sem filtro de
+  # marca = catálogo inteiro. Microdata igual ao agripecas, sem seletor CSS
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:
