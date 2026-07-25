@@ -43,6 +43,19 @@ def _first(v):
     return v
 
 
+def _first_dict(v):
+    """Como _first, mas pulando itens que não são dict quando v é lista --
+    alguns sites geram JSON-LD malformado com um item vazio extra antes do
+    Offer de verdade (ex: "offers": [[], {...}], achado no agroshopbr.com).
+    _first sozinho pegaria esse [] e nunca chegaria no preço."""
+    if isinstance(v, list):
+        for item in v:
+            if isinstance(item, dict):
+                return item
+        return None
+    return v
+
+
 def _norm_availability(raw):
     if not raw:
         return None
@@ -83,7 +96,7 @@ def _extrair_sku(node):
 
 
 def _parse_produto_jsonld(product):
-    offers = _first(product.get("offers"))
+    offers = _first_dict(product.get("offers"))
     out = {"produto": product.get("name"), "url": product.get("url")}
 
     sku = _extrair_sku(product)
@@ -185,7 +198,7 @@ def _from_microdata(items):
         sku = _extrair_sku(it)
         if sku:
             out["sku"] = sku
-        offers = _first(it.get("offers"))
+        offers = _first_dict(it.get("offers"))
         price = None
         if isinstance(offers, dict):
             price = offers.get("price")

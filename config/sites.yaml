@@ -180,6 +180,25 @@ dronedireto:
   # padrão do jerdrones/premierdrones). Microdata igual aos outros "Loja
   # Integrada", sem seletor CSS
 
+# ---- Scrapy (sitemap com fallback -- ver crawler/sitemap_utils.py) ----
+
+agroshopbr:
+  metodo: scrapy
+  domain: https://agroshopbr.com
+  filtro: [drone, "dji-", "-dji", agras]
+  # Magento (não "Loja Integrada"). robots.txt não bloqueia bot nenhum, mas
+  # disallowa "*cat=*" (bate com a URL de busca por categoria que motivou
+  # mapear esse site -- não usar esse padrão de URL) e declara um Sitemap
+  # de OUTRO domínio (agroshopacamargo.com.br) que só lista a home, sem
+  # produto nenhum -- por isso `descobrir_sitemaps` (crawler/sitemap_utils.py)
+  # agora também tenta o /sitemap.xml do próprio domínio como fonte extra
+  # quando o declarado no robots.txt é diferente (achado real testando esse
+  # site). Loja generalista agro (tratores, implementos) que também vende
+  # a linha DJI Agras -- 21317 URLs no catálogo, 33 batem no filtro.
+  # JSON-LD com bug real do lado do site ("offers" vem como lista com um
+  # item vazio antes do Offer de verdade) -- corrigido em
+  # crawler/extractors/structured.py (_first_dict), com teste de regressão
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:

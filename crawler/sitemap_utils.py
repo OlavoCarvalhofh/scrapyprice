@@ -33,7 +33,24 @@ def descobrir_sitemaps(domain):
         declarados = re.findall(r"^Sitemap:\s*(\S+)", r.text, re.MULTILINE | re.IGNORECASE)
     except requests.exceptions.RequestException:
         declarados = []
-    return declarados or [f"{domain}/sitemap.xml"]
+
+    padrao = f"{domain}/sitemap.xml"
+    if not declarados:
+        return [padrao]
+    if padrao in declarados:
+        return declarados
+
+    # Alguns sites declaram no robots.txt o sitemap de outro domínio "irmão"
+    # que não tem os produtos de verdade (achado real: agroshopbr.com
+    # declara o sitemap de agroshopacamargo.com.br, que só lista a home).
+    # Soma o sitemap padrão do próprio domínio como fonte extra -- só se ele
+    # existir de verdade, pra um 404 aqui não quebrar a coleta.
+    try:
+        r = requests.get(padrao, headers=_headers(), timeout=30)
+        r.raise_for_status()
+        return declarados + [padrao]
+    except requests.exceptions.RequestException:
+        return declarados
 
 
 def coletar_urls_sitemap(sitemap_url, visitados=None):

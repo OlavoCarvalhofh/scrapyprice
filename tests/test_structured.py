@@ -68,6 +68,23 @@ def test_jsonld_sem_offers_nao_extrai_preco():
     assert data == {}
 
 
+def test_jsonld_offers_lista_com_item_vazio_antes_do_offer_real():
+    # caso real: agroshopbr.com -- "offers" vem como [[], {...Offer...}], um
+    # item vazio antes do de verdade (JSON-LD malformado do lado do site).
+    # _first() sozinho pegaria o [] e nunca acharia o preço.
+    html = _html_com_jsonld("""
+    {
+      "@type": "Product",
+      "name": "Drone T50 DJI",
+      "offers": [[], {"@type": "Offer", "priceCurrency": "BRL", "price": 110000, "availability": "http://schema.org/InStock"}]
+    }
+    """)
+    data = extract_structured(html, URL)
+    assert data["preco"] == 110000.0
+    assert data["produto"] == "Drone T50 DJI"
+    assert data["fonte_extracao"] == "jsonld"
+
+
 def test_jsonld_website_nao_e_confundido_com_product():
     # caso real: tratorlin.com.br -- JSON-LD só de WebSite, sem Product
     html = _html_com_jsonld("""

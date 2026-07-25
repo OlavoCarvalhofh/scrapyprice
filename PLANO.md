@@ -142,6 +142,19 @@ Deixar o crawler robusto para rodar sem supervisão.
       mapeamento) -- 178 produtos, catálogo inteiro relevante, sem filtro de marca (mesmo padrão
       do jerdrones/premierdrones/dronedireto). Microdata igual aos outros, sem seletor CSS novo.
       Rodada completa disparada em background
+- [x] **agroshopbr.com mapeado** — Magento (não "Loja Integrada"). Achei 2 problemas reais
+      testando: (1) `descobrir_sitemaps` (`crawler/sitemap_utils.py`) seguia cegamente o sitemap
+      declarado no robots.txt, mas esse site declara o de OUTRO domínio (agroshopacamargo.com.br)
+      que só lista a home -- corrigido pra somar o `/sitemap.xml` do próprio domínio como fonte
+      extra quando existir, sem quebrar sites onde o declarado já é o certo; (2) o JSON-LD desse
+      site tem `"offers"` como lista com um item vazio `[]` antes do Offer de verdade -- `_first()`
+      pegava o `[]` e nunca achava o preço, corrigido com `_first_dict()` (pula itens que não são
+      dict) em `crawler/extractors/structured.py`, com teste de regressão em
+      `tests/test_structured.py` (37 testes no total). robots.txt não bloqueia bot, mas disallowa
+      `*cat=*` (a URL de busca por categoria que motivou olhar esse site -- não usar esse padrão).
+      `metodo: scrapy`, loja generalista agro que também vende a linha DJI Agras -- 21317 URLs no
+      catálogo, 33 batem no filtro. Validado com spider real (2/2 produtos). Rodada completa
+      disparada em background
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/
