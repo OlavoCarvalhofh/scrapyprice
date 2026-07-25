@@ -154,6 +154,20 @@ geotrackconsultoria:
   # produtos no catálogo, 48 batem no filtro. Microdata igual aos outros
   # dois "Loja Integrada", sem seletor CSS
 
+worldwidebrasil:
+  metodo: html_bulk
+  domain: https://www.worldwidebrasil.com.br
+  filtro: ["dji-", "-dji", drone, mavic, agras, phantom, avata, matrice, chasing, autel]
+  delay: 10
+  # mesma plataforma "Loja Integrada" (awsli), mesmo bloco robots.txt --
+  # html_bulk + delay:10. Loja GENERALISTA de produtos importados/eletrônicos
+  # (RC cars, celulares, câmeras, consoles, perfumes...) que também é um
+  # revendedor grande da linha DJI completa (Agras T10 a T50, Matrice,
+  # Mavic/Air/Mini/Avata, Chasing submarino, Autel) -- 1168 produtos no
+  # catálogo, 171 batem no filtro. "dji-"/"-dji" (não "dji" sozinho) evita
+  # falso positivo com "kurkdjian" (marca de perfume) casando a substring
+  # "dji". Microdata igual aos outros "Loja Integrada", sem seletor CSS
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:

@@ -126,6 +126,16 @@ Deixar o crawler robusto para rodar sem supervisão.
       jt50, jt20, jt10]` pra não trazer equipamento de topografia junto. 244 produtos no
       catálogo, 48 batem no filtro. Microdata igual aos outros "Loja Integrada", sem seletor CSS
       novo. Rodada completa disparada em background
+- [x] **worldwidebrasil.com.br mapeado** — mesma plataforma "Loja Integrada"/awsli e mesmo bloco
+      robots.txt dos outros três. Loja GENERALISTA de importados/eletrônicos (RC cars, celular,
+      câmera, console, perfume...) que também é revendedor grande da linha DJI inteira (Agras
+      T10 a T50, Matrice, Mavic/Air/Mini/Avata, Chasing submarino, Autel) -- 1168 produtos no
+      catálogo, 171 batem no filtro `["dji-", "-dji", drone, mavic, agras, phantom, avata,
+      matrice, chasing, autel]`. Usei `"dji-"`/`"-dji"` em vez de `dji` sozinho porque essa
+      substring dava falso positivo em "kurkdjian" (marca de perfume) -- achado testando o
+      filtro antes de rodar de verdade. Provavelmente a fonte mais rica pro projeto de drones
+      encontrada até agora (linha Agras completa num só lugar). Microdata igual aos outros "Loja
+      Integrada", sem seletor CSS novo. Rodada completa disparada em background
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/
