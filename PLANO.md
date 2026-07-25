@@ -118,6 +118,14 @@ Deixar o crawler robusto para rodar sem supervisão.
       testes no total). Loja de drones agrícolas DJI Agras (concorrente do projeto de drones),
       300 produtos, sem filtro de marca. Validado com spider real (2/2 produtos, robots.txt OK).
       Rodada completa disparada em background
+- [x] **geotrackconsultoria.com.br mapeado** — mesma plataforma "Loja Integrada"/awsli e mesmo
+      bloco robots.txt do agripecas/premierdrones (`metodo: html_bulk` + `delay: 10`). Diferente
+      dos outros dois sites de drone: aqui é loja GENERALISTA de topografia/geo (GPS, estação
+      total, prisma, tripé) que também vende drones DJI e drones pulverizadores agrícolas
+      (JT10L/JT20L/JT40L/JT50L) -- precisou de `filtro: [drone, dji, agras, pulverizador, jt40,
+      jt50, jt20, jt10]` pra não trazer equipamento de topografia junto. 244 produtos no
+      catálogo, 48 batem no filtro. Microdata igual aos outros "Loja Integrada", sem seletor CSS
+      novo. Rodada completa disparada em background
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/

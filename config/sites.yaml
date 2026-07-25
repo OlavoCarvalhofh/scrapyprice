@@ -140,6 +140,20 @@ premierdrones:
   # drones, não trator, como o jerdrones) -- 343 produtos, sem filtro de
   # marca = catálogo inteiro. Microdata igual ao agripecas, sem seletor CSS
 
+geotrackconsultoria:
+  metodo: html_bulk
+  domain: https://www.geotrackconsultoria.com.br
+  filtro: [drone, dji, agras, pulverizador, jt40, jt50, jt20, jt10]
+  delay: 10
+  # mesma plataforma "Loja Integrada" (awsli), mesmo bloco robots.txt --
+  # html_bulk + delay:10 pelo mesmo motivo do agripecas/premierdrones.
+  # Loja GENERALISTA de topografia/geo (GPS, estação total, prisma, tripé)
+  # que também vende drones DJI e drones pulverizadores agrícolas (JT10L/
+  # JT20L/JT40L/JT50L) -- diferente do jerdrones/premierdrones (100% drone),
+  # aqui precisa filtro pra não trazer equipamento de topografia. 244
+  # produtos no catálogo, 48 batem no filtro. Microdata igual aos outros
+  # dois "Loja Integrada", sem seletor CSS
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:
