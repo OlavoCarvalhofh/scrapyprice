@@ -33,7 +33,7 @@ def _carregar_sites():
         return yaml.safe_load(f) or {}
 
 
-def _rodar_vtex(cfg, delay):
+def _rodar_vtex(cfg, delay, site):
     from db.models import get_engine, get_session, init_db
     from scripts.sync_vtex_brand import sincronizar, sincronizar_busca
 
@@ -51,22 +51,24 @@ def _rodar_vtex(cfg, delay):
         session.close()
 
 
-def _rodar_html_bulk(cfg, delay):
+def _rodar_html_bulk(cfg, delay, site):
     from db.models import get_engine, get_session, init_db
     from scripts.sync_html_bulk import sincronizar
+    from crawler import relatorio_falhas
 
     db_url = os.environ.get("PRICE_DB_URL", "sqlite:///db/precos.db")
     engine = get_engine(db_url)
     init_db(engine)
     session = get_session(engine)
     try:
-        salvos, sem_preco = sincronizar(cfg["domain"], delay, session, filtro=cfg.get("filtro"))
+        salvos, sem_preco, falhas = sincronizar(cfg["domain"], delay, session, filtro=cfg.get("filtro"))
+        relatorio_falhas.salvar(site, falhas)
         print(f"Concluído: {salvos} registros salvos, {sem_preco} sem preço extraído.")
     finally:
         session.close()
 
 
-def _rodar_itemlist_bulk(cfg, delay):
+def _rodar_itemlist_bulk(cfg, delay, site):
     from db.models import get_engine, get_session, init_db
     from scripts.sync_itemlist_bulk import sincronizar
 
@@ -81,7 +83,7 @@ def _rodar_itemlist_bulk(cfg, delay):
         session.close()
 
 
-def _rodar_scrapy(cfg, delay):
+def _rodar_scrapy(cfg, delay, site):
     from crawler.sitemap_utils import (
         descobrir_sitemaps,
         coletar_urls_sitemap,
@@ -124,7 +126,7 @@ def _rodar_scrapy(cfg, delay):
     if delay is not None:
         settings.set("DOWNLOAD_DELAY", delay)
     process = CrawlerProcess(settings)
-    process.crawl("price", urls=urls)
+    process.crawl("price", urls=urls, site=site)
     process.start()
 
 
@@ -167,7 +169,7 @@ def main():
 
     lock = adquirir_lock(f"sync_{args.site}")
     try:
-        _DISPATCH[metodo](cfg, delay)
+        _DISPATCH[metodo](cfg, delay, args.site)
     finally:
         lock.release()
 

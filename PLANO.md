@@ -22,7 +22,16 @@ Com o Kestra entrando no plano (Fase 1), a conta de recursos mudou:
 
 ## Fase 0 — Hardening local (antes de subir)
 Deixar o crawler robusto para rodar sem supervisão.
-- [ ] Migrar de SQLite para **Postgres self-hosted na própria VPS** (decidido: não vamos usar Supabase) — instalar `psycopg2`, trocar `PRICE_DB_URL` para a connection string do Postgres local (o código já usa SQLAlchemy, então a mudança é só configuração + `init_db` criando a tabela `coletas` lá)
+- [x] Migrar de SQLite para **Postgres self-hosted** (decidido: não vamos usar Supabase) —
+      código já era só configuração (`PRICE_DB_URL`, SQLAlchemy). **Validado localmente**: subiu
+      o `postgres:16.4` via `docker-compose.yml`, rodou `init_db` (criou a tabela `coletas`) e
+      confirmou insert+query reais contra o Postgres. Ainda falta repetir esse mesmo teste já na
+      VPS (Fase 1) quando ela existir -- aqui só prova que o caminho de código funciona. Nessa
+      validação o Docker Desktop local travou (bug do `vpnkit-bridge`, sem relação com o projeto)
+      e a imagem `postgres:16` puxada durante o travamento ficou corrompida (`docker-entrypoint.sh`
+      virou um arquivo de 0 bytes, sobrevivendo até a `docker rmi`+re-pull) -- por isso o
+      `docker-compose.yml` agora fixa `postgres:16.4` em vez de `postgres:16` (também mais
+      consistente com o resto do projeto, que já fixa versões)
 - [x] Ativar modo **WAL** do SQLite (`PRAGMA journal_mode=WAL;`) — feito em `db/models.py`
       (`get_engine`), ativado automaticamente a cada conexão via `event.listens_for`. Testado:
       `PRAGMA journal_mode` confirma `wal` num banco temporário
@@ -60,8 +69,8 @@ Deixar o crawler robusto para rodar sem supervisão.
 - [x] `docker-compose.yml` criado — Postgres (banco `precos` + banco `kestra` separado no mesmo
       container, via `docker/init-postgres-databases.sh`) + Kestra apontando pra ele + serviço
       `crawler` (build-only, é a imagem que o Kestra vai usar pra rodar os flows). `.env.example`
-      documentando as variáveis. Ainda não testado subindo de verdade (falta Docker Desktop
-      rodando aqui, ou testar direto na VPS)
+      documentando as variáveis. **Serviço `postgres` testado subindo de verdade localmente**
+      (ver item da Fase 0 acima); Kestra ainda não testado
 - [ ] Acessar a interface do Kestra (porta 8080) só via **túnel SSH** — não expor direto pra internet sem autenticação na frente
 - [ ] Criar os **flows YAML** no Kestra — um por site (ou um flow com tarefas paralelas), cada um chamando `python scripts/sync_site.py --site <nome>` dentro do container do crawler, com gatilho de agendamento (substitui o cron)
 - [ ] Validar timezone do servidor (pra bater com o horário desejado nas coletas)

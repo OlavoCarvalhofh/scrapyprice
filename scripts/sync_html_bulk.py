@@ -28,6 +28,7 @@ from crawler.middlewares import USER_AGENTS
 from crawler.extractors.structured import extract_structured
 from crawler.extractors.custom import extract_custom
 from crawler.sitemap_utils import descobrir_sitemaps, coletar_urls_sitemap, filtrar_por_url
+from crawler import relatorio_falhas
 from db.models import Coleta, get_engine, get_session, init_db
 
 CAMPOS = (
@@ -88,17 +89,21 @@ def sincronizar(domain, delay, session, limite=None, filtro=None):
 
     salvos = 0
     sem_preco = 0
+    falhas = []
     for i, url in enumerate(urls, start=1):
         try:
             resp = requests.get(url, headers=_headers(), timeout=30)
             resp.raise_for_status()
             registro = _para_registro(url, resp.text, netloc)
+            motivo = "sem_preco"
         except requests.exceptions.RequestException as e:
             print(f"  AVISO: falha ao buscar {url} ({e}) -- pulando")
             registro = None
+            motivo = f"erro_rede: {e}"
 
         if registro is None:
             sem_preco += 1
+            falhas.append({"url": url, "motivo": motivo})
         else:
             session.add(Coleta(**registro))
             salvos += 1
@@ -110,7 +115,7 @@ def sincronizar(domain, delay, session, limite=None, filtro=None):
         time.sleep(delay * random.uniform(0.7, 1.3))
 
     session.commit()
-    return salvos, sem_preco
+    return salvos, sem_preco, falhas
 
 
 def main():
@@ -129,7 +134,8 @@ def main():
     session = get_session(engine)
 
     try:
-        salvos, sem_preco = sincronizar(args.domain, args.delay, session, args.limite, args.filtro)
+        salvos, sem_preco, falhas = sincronizar(args.domain, args.delay, session, args.limite, args.filtro)
+        relatorio_falhas.salvar(urlparse(args.domain).netloc, falhas)
         print(f"Concluído: {salvos} registros salvos, {sem_preco} sem preço extraído.")
     finally:
         session.close()
