@@ -168,6 +168,18 @@ worldwidebrasil:
   # falso positivo com "kurkdjian" (marca de perfume) casando a substring
   # "dji". Microdata igual aos outros "Loja Integrada", sem seletor CSS
 
+dronedireto:
+  metodo: html_bulk
+  domain: https://www.dronedireto.com.br
+  delay: 10
+  # mesma plataforma "Loja Integrada" (awsli), mesmo bloco robots.txt --
+  # html_bulk + delay:10. Loja especializada em drone/mapeamento aéreo
+  # profissional (DJI enterprise: Matrice, Zenmuse, Dock; câmeras
+  # multiespectrais Micasense/MAPIR; software de mapeamento) -- 178
+  # produtos, catálogo inteiro relevante (sem filtro de marca, mesmo
+  # padrão do jerdrones/premierdrones). Microdata igual aos outros "Loja
+  # Integrada", sem seletor CSS
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:

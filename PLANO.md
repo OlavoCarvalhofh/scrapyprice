@@ -136,6 +136,12 @@ Deixar o crawler robusto para rodar sem supervisão.
       filtro antes de rodar de verdade. Provavelmente a fonte mais rica pro projeto de drones
       encontrada até agora (linha Agras completa num só lugar). Microdata igual aos outros "Loja
       Integrada", sem seletor CSS novo. Rodada completa disparada em background
+- [x] **dronedireto.com.br mapeado** — mesma plataforma "Loja Integrada"/awsli e mesmo bloco
+      robots.txt dos outros. Loja especializada em drone/mapeamento aéreo profissional (DJI
+      enterprise: Matrice, Zenmuse, Dock; câmeras multiespectrais Micasense/MAPIR; software de
+      mapeamento) -- 178 produtos, catálogo inteiro relevante, sem filtro de marca (mesmo padrão
+      do jerdrones/premierdrones/dronedireto). Microdata igual aos outros, sem seletor CSS novo.
+      Rodada completa disparada em background
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/
