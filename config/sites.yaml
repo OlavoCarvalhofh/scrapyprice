@@ -103,6 +103,20 @@ engepecas:
   domain: https://engepecas.com.br
   filtro: [case, cnh, new-holland]
 
+agripecas:
+  metodo: html_bulk
+  domain: https://www.agripecas.net
+  filtro: [case, new-holland, cnh]
+  delay: 10
+  # plataforma "Loja Integrada" (awsli); robots.txt tem um bloco específico
+  # "User-agent: Scrapy" com Disallow: / (junto com vários outros bots
+  # conhecidos), então method=scrapy ficaria bloqueado -- html_bulk não passa
+  # pelo RobotsTxtMiddleware do Scrapy. O grupo "User-agent: *" (que cobre
+  # nosso UA de navegador comum) permite tudo com Crawl-delay: 10, respeitado
+  # aqui via "delay". Catálogo pequeno (347 produtos, 16 batem no filtro CNH
+  # -- peças de plataforma de colheitadeira). Microdata (schema.org Product/
+  # Offer) já traz produto/sku/preço prontos, sem precisar de seletor CSS
+
 # ---- ItemList bulk (páginas com vários produtos cada, ex: catálogo por veículo) ----
 
 paccini:

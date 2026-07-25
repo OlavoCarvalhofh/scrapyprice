@@ -93,6 +93,15 @@ Deixar o crawler robusto para rodar sem supervisão.
 
 ## Fase 2 — Popular dados reais
 - [x] Sites mapeados e configurados em `config/sites.yaml` (14 lojas já rodadas pelo menos uma vez: agrotrator, fornecedoramaquinas, fornecedoraagro, carpaltratores, pitstop, tratorlin, acamargo, superagrosc, tratormag, jerdrones, prosperadistribuicao, newpecasoficial, engepecas, paccini)
+- [x] **agripecas.net mapeado** (plataforma "Loja Integrada"/awsli) — `metodo: html_bulk` porque o
+      robots.txt tem um bloco `User-agent: Scrapy` com `Disallow: /` explícito (junto de vários
+      outros bots conhecidos: GPTBot, ClaudeBot, CCBot, Diffbot, etc.) que bloquearia
+      `metodo: scrapy` via `RobotsTxtMiddleware`; `User-agent: *` (nosso UA de navegador comum)
+      permite tudo com `Crawl-delay: 10`, respeitado via `delay: 10` no YAML (novo campo opcional
+      por site em `sync_site.py`, antes só existia o padrão fixo por método). Catálogo pequeno
+      (347 produtos, 16-18 batem no filtro `[case, new-holland, cnh]` -- peças de plataforma de
+      colheitadeira). Rodado de verdade contra o banco: 15 salvos, 3 sem preço (1 é a página de
+      categoria da marca, capturada pelo filtro por engano mas inofensiva -- só gera um warning)
 - [ ] Rodar `newpecasoficial` completo (179 produtos) — hoje só tem os 10 do teste inicial
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/
       pitstop/carpaltratores via VTEX já tinham SKU; os outros 9 estavam com a coluna vazia).
@@ -173,8 +182,7 @@ propósito pela plataforma (diferente dos outros sites, onde era só ajuste téc
   seja aprovada no futuro.
 
 ## Sites pendentes para investigar
-- **agripecas.net** — plataforma "Loja Integrada" (ainda não testada nesse projeto), sitemap em
-  https://www.agripecas.net/sitemap.xml — investigar quando retomar mapeamento de sites
+(nenhum no momento -- agripecas.net mapeado, ver Fase 2)
 
 ## Sites bloqueados fora das fases (não perseguir)
 - **usaparts.com.br** — preço só visível com login (B2B), fora de escopo pra scraping público

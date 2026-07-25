@@ -165,7 +165,10 @@ def main():
         raise SystemExit(f"Método '{metodo}' desconhecido (site {args.site})")
 
     padrao_delay = {"vtex": 1.5, "html_bulk": 1.5, "itemlist_bulk": 1.0, "scrapy": None}
-    delay = args.delay if args.delay is not None else padrao_delay[metodo]
+    # cfg["delay"] permite sobrescrever o padrão do método por site -- ex: um
+    # robots.txt com Crawl-delay explícito maior que o nosso padrão (ver
+    # agripecas em config/sites.yaml)
+    delay = args.delay if args.delay is not None else cfg.get("delay", padrao_delay[metodo])
 
     lock = adquirir_lock(f"sync_{args.site}")
     try:
