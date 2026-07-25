@@ -161,6 +161,13 @@ Deixar o crawler robusto para rodar sem supervisão.
       **e também XAG** (concorrente chinesa da DJI nesse nicho, não vista em nenhum site anterior)
       -- 275 produtos, catálogo inteiro relevante, sem filtro de marca. JSON-LD limpo, sem seletor
       CSS novo. Validado com spider real (2/2 produtos). Rodada completa disparada em background
+- [x] **realtrator.com.br mapeado** — volta ao tema trator/CNH (sugestão do usuário: filtrar por
+      New Holland e Case IH). robots.txt tem `Disallow: /produto/`, mas as URLs de produto reais
+      não usam esse prefixo (`/pecas-para-X/<slug>`) -- não afetado, `ROBOTSTXT_OBEY` permite
+      normal. Catálogo enorme: 6482 URLs (13 páginas de sitemap), generalista multi-marca (Massey
+      Ferguson, JCB, Valtra, Case, New Holland...) -- 1367 batem no filtro `[case, new-holland,
+      newholland, cnh]`. Microdata pronta, sem seletor CSS. Validado com spider real (2/2
+      produtos). Rodada grande disparada em background (~3h no delay padrão do scrapy)
 - [x] Rodar `newpecasoficial` completo (179 produtos, antes só tinha os 10 do teste inicial) —
       rodado com sucesso via `sync_site.py --site newpecasoficial`
 - [x] **Extração de SKU nos 9 sites não-VTEX** (agrotrator/fornecedoraagro/fornecedoramaquinas/

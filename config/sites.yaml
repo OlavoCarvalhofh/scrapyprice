@@ -60,6 +60,17 @@ tratorlin:
   domain: https://www.loja.tratorlin.com.br
   filtro: [case, new-holland]
 
+realtrator:
+  metodo: scrapy
+  domain: https://realtrator.com.br
+  filtro: [case, new-holland, newholland, cnh]
+  # robots.txt tem "Disallow: /produto/", mas as URLs de produto de verdade
+  # não usam esse prefixo (ficam em /pecas-para-X/<slug>), então não é
+  # afetado -- ROBOTSTXT_OBEY permite normal. Catálogo enorme (6482 URLs,
+  # 13 páginas de sitemap), generalista multi-marca (Massey Ferguson, JCB,
+  # Valtra, Case, New Holland...) -- 1367 batem no filtro CNH. Microdata
+  # pronta, sem seletor CSS. Rodada grande (~3h no delay padrão do scrapy)
+
 acamargo:
   metodo: scrapy
   domain: https://www.acamargo.com
