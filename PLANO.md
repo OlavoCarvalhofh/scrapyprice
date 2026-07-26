@@ -180,8 +180,13 @@ Deixar o crawler robusto para rodar sem supervisão.
       testes no total, todos passando). **Não precisou de seletor CSS nem regex por site** —
       dado já estruturado em 100% dos casos testados (tratorlin, acamargo, tratormag, jerdrones,
       prosperadistribuicao, engepecas, newpecasoficial, superagrosc, paccini)
-- [ ] Rodar de novo os 9 sites acima pra backfill do SKU nos registros já coletados (a correção
-      só vale pra coletas novas — os registros antigos ficam com `sku` vazio até rodar de novo)
+- [x] Rodar de novo os 9 sites (tratorlin, acamargo, superagrosc, tratormag, jerdrones,
+      prosperadistribuicao, newpecasoficial, engepecas, paccini) pra backfill do SKU. 7 de 9
+      ficaram com 100% de cobertura de SKU nos registros novos; `tratorlin` ficou parcial (46%
+      -- 1443/3111, provavelmente parte do catálogo real mesmo sem SKU no dado estruturado, não
+      parece bug); `paccini` sem SKU em nenhum registro (esse site nunca teve SKU no `ItemList`
+      JSON-LD, não é regressão de hoje). Registros antigos (antes de hoje) continuam com `sku`
+      vazio -- é esperado, a correção só vale daqui pra frente
 - [ ] Rodar por alguns dias (já na VPS, via Kestra) e conferir se o histórico está sendo gravado como esperado (série temporal, sem sobrescrita)
 - [x] Relatório de URLs "quebradas" — `crawler/relatorio_falhas.py`, grava
       `logs/urls_quebradas/<site>.json` (URLs sem preço ou com erro de rede na última rodada,
