@@ -2,6 +2,7 @@
 db/precos.db
 db/precos.db-shm
 db/precos.db-wal
+db/precos.csv
 __pycache__/
 *.pyc
 .venv/

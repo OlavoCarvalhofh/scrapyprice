@@ -208,7 +208,10 @@ Deixar o crawler robusto para rodar sem supervisão.
 - [ ] Você leva o prompt (já combinado) pra uma IA de design e traz o resultado (imagens/protótipo) — pra refinar o visual da versão funcional acima
 - [ ] Rodar `scripts/gerar_dashboard.py` de novo depois que migrar pro Postgres (Fase 0/1)
 - [ ] Tabela/view de "preço atual" separada do histórico completo — hoje o script já calcula isso em Python a cada geração; considerar uma view materializada no Postgres se ficar lento com mais dados
-- [ ] Export CSV sob demanda, útil pra jogar num Excel/Sheets rápido sem passar pelo dashboard
+- [x] Export CSV sob demanda — `scripts/exportar_csv.py`, exporta todo o histórico de coletas
+      (`db/precos.csv` por padrão, `--saida` pra outro caminho). Motivação real: testar consumo
+      via Power BI sem precisar de driver ODBC pra SQLite -- CSV/Excel tem conector nativo de
+      pasta (inclusive SharePoint/OneDrive), muito mais simples que ODBC + Gateway pessoal
 
 ## Fase 4 — Acesso remoto ao dashboard (opcional, via Cloudflare Pages)
 - [ ] Publicar o dashboard em **Cloudflare Pages** (estático ou com Pages Functions), conectando direto no Postgres da VPS
