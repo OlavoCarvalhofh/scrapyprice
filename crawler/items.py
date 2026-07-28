@@ -6,6 +6,7 @@ class ProductItem(scrapy.Item):
     loja = scrapy.Field()
     produto = scrapy.Field()
     sku = scrapy.Field()
+    mpn = scrapy.Field()
     categoria = scrapy.Field()
 
     preco = scrapy.Field()

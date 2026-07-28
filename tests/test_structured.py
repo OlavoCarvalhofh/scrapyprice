@@ -233,6 +233,39 @@ def test_jsonld_sku_prioriza_sku_sobre_mpn_e_gtin():
     assert data["sku"] == "3038055"
 
 
+def test_jsonld_extrai_sku_e_mpn_como_campos_separados():
+    # mesmo caso real do teste acima (acamargo.com), mas verificando que
+    # "mpn" -- o código de peça do fabricante, usado pra bater com
+    # dm_parts.cd_part_number no Power BI -- não é mais descartado quando
+    # "sku" (o ID interno da loja) também está presente
+    html = _html_com_jsonld("""
+    {
+      "@type": "Product",
+      "name": "Polia Tensora",
+      "sku": "3038055",
+      "mpn": "149159",
+      "gtin13": "7890003038055",
+      "offers": {"price": "140.30"}
+    }
+    """)
+    data = extract_structured(html, URL)
+    assert data["sku"] == "3038055"
+    assert data["mpn"] == "149159"
+
+
+def test_jsonld_sem_mpn_nao_preenche_campo():
+    html = _html_com_jsonld("""
+    {
+      "@type": "Product",
+      "name": "Peca sem mpn",
+      "sku": "123",
+      "offers": {"price": "10.00"}
+    }
+    """)
+    data = extract_structured(html, URL)
+    assert "mpn" not in data
+
+
 def test_jsonld_sku_cai_para_mpn_quando_sem_sku():
     html = _html_com_jsonld("""
     {
@@ -261,3 +294,21 @@ def test_microdata_extrai_sku():
     """
     data = extract_structured(html, URL)
     assert data["sku"] == "8500173"
+
+
+def test_microdata_extrai_sku_e_mpn_como_campos_separados():
+    html = """
+    <html><body>
+    <div itemscope itemtype="https://schema.org/Product">
+      <span itemprop="name">Bucha</span>
+      <span itemprop="sku">8500173</span>
+      <span itemprop="mpn">149159</span>
+      <div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+        <span itemprop="price">75.30</span>
+      </div>
+    </div>
+    </body></html>
+    """
+    data = extract_structured(html, URL)
+    assert data["sku"] == "8500173"
+    assert data["mpn"] == "149159"

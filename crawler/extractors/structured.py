@@ -103,6 +103,10 @@ def _parse_produto_jsonld(product):
     if sku:
         out["sku"] = sku
 
+    mpn = _first(product.get("mpn"))
+    if mpn:
+        out["mpn"] = str(mpn)
+
     img = product.get("image")
     out["imagem_url"] = _first(img) if img else None
 
@@ -198,6 +202,9 @@ def _from_microdata(items):
         sku = _extrair_sku(it)
         if sku:
             out["sku"] = sku
+        mpn = _first(it.get("mpn"))
+        if mpn:
+            out["mpn"] = str(mpn)
         offers = _first_dict(it.get("offers"))
         price = None
         if isinstance(offers, dict):

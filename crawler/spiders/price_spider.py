@@ -68,7 +68,7 @@ class PriceSpider(scrapy.Spider):
         item["loja"] = domain
         item["moeda"] = data.get("moeda", "BRL")
         for field in (
-            "produto", "sku", "categoria", "preco", "preco_de", "preco_a_vista",
+            "produto", "sku", "mpn", "categoria", "preco", "preco_de", "preco_a_vista",
             "parcelas", "parcela_valor", "parcela_sem_juros", "disponibilidade",
             "vendedor", "avaliacao_nota", "avaliacao_qtd", "imagem_url",
             "fonte_extracao",

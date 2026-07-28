@@ -33,6 +33,11 @@ class Coleta(Base):
     loja = Column(String, index=True)          # domínio (ex: loja.caseih.com.br)
     produto = Column(String)                   # nome do produto
     sku = Column(String)                       # variação, quando existir
+    mpn = Column(String)                       # schema.org "mpn" -- declarado pelo site, nem
+                                                # sempre é o código de peça real (ver codigo_peca)
+    codigo_peca = Column(String)               # código de peça do fabricante extraído por
+                                                # heurística do nome (sites VTEX onde sku/mpn não
+                                                # trazem isso -- ver scripts/sync_vtex_brand.py)
     categoria = Column(String)                 # breadcrumb / categoria
 
     # preço em profundidade

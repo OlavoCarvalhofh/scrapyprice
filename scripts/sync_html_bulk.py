@@ -32,7 +32,7 @@ from crawler import relatorio_falhas
 from db.models import Coleta, get_engine, get_session, init_db
 
 CAMPOS = (
-    "produto", "sku", "categoria", "preco", "preco_de", "preco_a_vista",
+    "produto", "sku", "mpn", "categoria", "preco", "preco_de", "preco_a_vista",
     "parcelas", "parcela_valor", "parcela_sem_juros", "disponibilidade",
     "vendedor", "avaliacao_nota", "avaliacao_qtd", "imagem_url",
     "fonte_extracao",

@@ -20,7 +20,7 @@ os.chdir(BASE_DIR)
 from db.models import get_engine, get_session, Coleta
 
 CAMPOS = (
-    "id", "url", "loja", "produto", "sku", "categoria",
+    "id", "url", "loja", "produto", "sku", "mpn", "codigo_peca", "categoria",
     "preco", "preco_de", "preco_a_vista", "moeda",
     "parcelas", "parcela_valor", "parcela_sem_juros",
     "disponibilidade", "vendedor", "avaliacao_nota", "avaliacao_qtd",

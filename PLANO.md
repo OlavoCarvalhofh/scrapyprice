@@ -187,6 +187,24 @@ Deixar o crawler robusto para rodar sem supervisão.
       parece bug); `paccini` sem SKU em nenhum registro (esse site nunca teve SKU no `ItemList`
       JSON-LD, não é regressão de hoje). Registros antigos (antes de hoje) continuam com `sku`
       vazio -- é esperado, a correção só vale daqui pra frente
+- [x] **`sku` capturado nos sites VTEX não é o código de peça do fabricante** -- descoberto ao
+      tentar bater `precos.sku` com `dm_parts.cd_part_number` no Power BI (só 2,4% batia).
+      Investigação: (1) `_extrair_sku()` descartava o campo `mpn` sempre que `sku` já existia --
+      corrigido pra capturar os dois como campos SEPARADOS (`sku` e `mpn` novos em
+      `crawler/extractors/structured.py`/`items.py`/`db/models.py`); (2) mesmo com `mpn`
+      separado, validação contra a lista mestre de peças do usuário (`db/list (4).csv`, 220.851
+      códigos) mostrou que nos sites VTEX (agrotrator, carpaltratores, fornecedoramaquinas,
+      fornecedoraagro) **nem sku nem mpn têm o código real** -- ele só existe como texto livre
+      no nome do produto (ex: "Silenciador ... New Holland 47699390 CNH" -> código é
+      "47699390"). Criada coluna nova `codigo_peca` (não sobrescreve `mpn`, que é o valor cru
+      declarado pelo site, de origem/confiabilidade diferente) com heurística em
+      `scripts/sync_vtex_brand.py` (`_extrair_codigo_peca`): pega o último token do nome que
+      parece código (alfanumérico, 4+ chars, com dígito). Validado contra a lista mestre: 78,9%
+      agrotrator, 91,4% carpaltratores, 73,3% fornecedoramaquinas, 71,2% fornecedoraagro (pitstop
+      só 0,8% -- esse site não embute o código no nome de forma confiável). Backfill rodado nos
+      47.315 registros já coletados desses 5 sites via `scripts/backfill_codigo_peca.py` (sem
+      re-crawlear, o código já vinha do texto salvo) -- 46.376 atualizados. 7 testes de regressão
+      novos em `tests/test_sync_vtex_brand.py` (47 testes no total)
 - [ ] Rodar por alguns dias (já na VPS, via Kestra) e conferir se o histórico está sendo gravado como esperado (série temporal, sem sobrescrita)
 - [x] Relatório de URLs "quebradas" — `crawler/relatorio_falhas.py`, grava
       `logs/urls_quebradas/<site>.json` (URLs sem preço ou com erro de rede na última rodada,
