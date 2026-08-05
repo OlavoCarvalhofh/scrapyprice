@@ -136,6 +136,28 @@
   .historico-tabela { width: 100%; font-size: 12px; margin-top: 8px; }
   .historico-tabela td { padding: 4px 8px; border-bottom: 1px solid var(--gridline); }
 
+  .abas { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--gridline); }
+  .aba-btn {
+    font-family: inherit; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); background: none; border: none; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .aba-btn:hover { color: var(--text-primary); }
+  .aba-btn.ativa { color: var(--text-primary); border-bottom-color: var(--series-1); }
+  .aba-painel { display: none; }
+  .aba-painel.ativa { display: block; }
+
+  .quad-linha { stroke: var(--baseline); stroke-width: 1; stroke-dasharray: 4 4; }
+  .quad-rotulo { fill: var(--text-muted); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .ponto-alta { fill: var(--status-critical); fill-opacity: 0.75; stroke: var(--surface-1); stroke-width: 1; cursor: pointer; }
+  .ponto-baixa { fill: var(--status-good); fill-opacity: 0.75; stroke: var(--surface-1); stroke-width: 1; cursor: pointer; }
+  .ponto-neutro { fill: var(--text-muted); fill-opacity: 0.6; stroke: var(--surface-1); stroke-width: 1; cursor: pointer; }
+  .ponto-alta:hover, .ponto-baixa:hover, .ponto-neutro:hover { fill-opacity: 1; }
+  .disp-legenda { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); margin: 10px 0; flex-wrap: wrap; }
+  .disp-legenda span { display: inline-flex; align-items: center; gap: 5px; }
+  .disp-legenda i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .disp-info { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+
   @media (max-width: 640px) {
     table thead { display: none; }
     tbody tr { display: block; border-bottom: 4px solid var(--page-plane); }
@@ -156,30 +178,50 @@
     <div class="tile"><div class="label">Última coleta</div><div class="value" id="tile-ultima" style="font-size:16px;">—</div></div>
   </div>
 
-  <div class="filtros">
-    <input type="text" id="busca" placeholder="Buscar produto...">
-    <select id="filtro-loja"><option value="">Todas as lojas</option></select>
+  <div class="abas">
+    <button class="aba-btn ativa" id="aba-btn-tabela" data-aba="tabela">Tabela</button>
+    <button class="aba-btn" id="aba-btn-dispersao" data-aba="dispersao">Dispersão</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th data-campo="loja">Loja</th>
-        <th data-campo="produto">Produto</th>
-        <th data-campo="preco">Preço</th>
-        <th data-campo="disponibilidade">Disponibilidade</th>
-        <th data-campo="atualizado">Atualizado em</th>
-      </tr>
-    </thead>
-    <tbody id="corpo-tabela"></tbody>
-  </table>
-
-  <div class="paginacao">
-    <span id="info-pagina"></span>
-    <div>
-      <button id="btn-anterior">← Anterior</button>
-      <button id="btn-proximo">Próximo →</button>
+  <div class="aba-painel ativa" id="aba-tabela">
+    <div class="filtros">
+      <input type="text" id="busca" placeholder="Buscar produto...">
+      <select id="filtro-loja"><option value="">Todas as lojas</option></select>
     </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th data-campo="loja">Loja</th>
+          <th data-campo="produto">Produto</th>
+          <th data-campo="preco">Preço</th>
+          <th data-campo="disponibilidade">Disponibilidade</th>
+          <th data-campo="atualizado">Atualizado em</th>
+        </tr>
+      </thead>
+      <tbody id="corpo-tabela"></tbody>
+    </table>
+
+    <div class="paginacao">
+      <span id="info-pagina"></span>
+      <div>
+        <button id="btn-anterior">← Anterior</button>
+        <button id="btn-proximo">Próximo →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="aba-painel" id="aba-dispersao">
+    <div class="filtros">
+      <select id="disp-loja"></select>
+    </div>
+    <div class="disp-legenda">
+      <span><i style="background:var(--status-critical)"></i> Preço subiu</span>
+      <span><i style="background:var(--status-good)"></i> Preço caiu</span>
+      <span><i style="background:var(--text-muted)"></i> Sem variação</span>
+    </div>
+    <div id="disp-grafico"></div>
+    <p class="disp-info" id="disp-info"></p>
   </div>
 
   <div class="painel" id="painel">
@@ -412,6 +454,119 @@ function ativarHover(container, pontos) {
   });
 }
 
+function preencherSeletorDispersao() {
+  const sel = document.getElementById("disp-loja");
+  for (const loja of LOJAS) {
+    const opt = document.createElement("option");
+    opt.value = loja; opt.textContent = loja;
+    sel.appendChild(opt);
+  }
+  if (LOJAS.length) sel.value = LOJAS[0];
+}
+
+function dadosDispersao(loja) {
+  const pontos = [];
+  let semHistorico = 0;
+  for (const p of PRODUTOS) {
+    if (loja && p.loja !== loja) continue;
+    const hist = (HISTORICO[p.url] || []).slice().sort((a, b) => new Date(a[0]) - new Date(b[0]));
+    if (hist.length < 2 || !hist[0][1]) { semHistorico++; continue; }
+    const primeiro = hist[0][1], atual = hist[hist.length - 1][1];
+    const variacao = (atual - primeiro) / primeiro * 100;
+    pontos.push({ produto: p, preco: atual, variacao });
+  }
+  return { pontos, semHistorico };
+}
+
+function desenharDispersao(pontos) {
+  const largura = 900, altura = 460, margem = { topo: 24, baixo: 36, esq: 70, dir: 24 };
+  const w = largura - margem.esq - margem.dir;
+  const h = altura - margem.topo - margem.baixo;
+
+  const precos = pontos.map(p => p.preco);
+  const pMin = Math.min(...precos), pMax = Math.max(...precos);
+  const folgaP = (pMax - pMin) * 0.08 || pMax * 0.1 || 1;
+  const xMin = Math.max(0, pMin - folgaP), xMax = pMax + folgaP;
+
+  const variacoes = pontos.map(p => p.variacao);
+  const maiorAbs = Math.max(Math.abs(Math.min(...variacoes)), Math.abs(Math.max(...variacoes)), 1) * 1.15;
+  const yMin = -maiorAbs, yMax = maiorAbs;
+
+  const precosOrdenados = [...precos].sort((a, b) => a - b);
+  const mediana = precosOrdenados.length % 2 === 0
+    ? (precosOrdenados[precosOrdenados.length / 2 - 1] + precosOrdenados[precosOrdenados.length / 2]) / 2
+    : precosOrdenados[(precosOrdenados.length - 1) / 2];
+
+  const x = v => margem.esq + (v - xMin) / (xMax - xMin || 1) * w;
+  const y = v => margem.topo + h - (v - yMin) / (yMax - yMin || 1) * h;
+
+  let svg = `<svg viewBox="0 0 ${largura} ${altura}" width="100%" style="max-width:100%;">`;
+
+  for (let i = 0; i <= 3; i++) {
+    const v = yMin + (yMax - yMin) * i / 3;
+    svg += `<line class="grade-linha" x1="${margem.esq}" x2="${largura - margem.dir}" y1="${y(v)}" y2="${y(v)}" />`;
+    svg += `<text class="eixo-texto" x="${margem.esq - 8}" y="${y(v) + 4}" text-anchor="end">${v.toFixed(0)}%</text>`;
+  }
+  svg += `<line class="eixo-linha" x1="${margem.esq}" x2="${largura - margem.dir}" y1="${margem.topo + h}" y2="${margem.topo + h}" />`;
+  svg += `<text class="eixo-texto" x="${margem.esq + w / 2}" y="${altura - 6}" text-anchor="middle">Preço atual (R$) →</text>`;
+
+  // linhas de quadrante: variação 0% e mediana de preço
+  svg += `<line class="quad-linha" x1="${margem.esq}" x2="${largura - margem.dir}" y1="${y(0)}" y2="${y(0)}" />`;
+  svg += `<line class="quad-linha" x1="${x(mediana)}" x2="${x(mediana)}" y1="${margem.topo}" y2="${margem.topo + h}" />`;
+
+  // rótulos de quadrante (estilo Gartner)
+  svg += `<text class="quad-rotulo" x="${margem.esq + 6}" y="${margem.topo + 14}">Barato e subindo</text>`;
+  svg += `<text class="quad-rotulo" x="${largura - margem.dir - 6}" y="${margem.topo + 14}" text-anchor="end">Caro e subindo</text>`;
+  svg += `<text class="quad-rotulo" x="${margem.esq + 6}" y="${margem.topo + h - 6}">Barato e caindo</text>`;
+  svg += `<text class="quad-rotulo" x="${largura - margem.dir - 6}" y="${margem.topo + h - 6}" text-anchor="end">Caro e caindo</text>`;
+
+  for (const pt of pontos) {
+    const classe = pt.variacao > 0.01 ? "ponto-alta" : pt.variacao < -0.01 ? "ponto-baixa" : "ponto-neutro";
+    const cx = x(pt.preco), cy = y(pt.variacao);
+    const titulo = `${pt.produto.produto || "(sem nome)"} — ${formatarMoeda(pt.preco)} (${pt.variacao > 0 ? "+" : ""}${pt.variacao.toFixed(1)}%)`;
+    svg += `<circle class="${classe}" data-url="${pt.produto.url.replace(/"/g, "&quot;")}" cx="${cx}" cy="${cy}" r="5"><title>${titulo}</title></circle>`;
+  }
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function renderizarDispersao() {
+  const loja = document.getElementById("disp-loja").value;
+  const { pontos, semHistorico } = dadosDispersao(loja);
+  const grafico = document.getElementById("disp-grafico");
+  const info = document.getElementById("disp-info");
+
+  if (pontos.length === 0) {
+    grafico.innerHTML = "<p>Nenhum produto com pelo menos 2 coletas ainda nessa loja.</p>";
+    info.textContent = "";
+    return;
+  }
+
+  grafico.innerHTML = desenharDispersao(pontos);
+  info.textContent = `${pontos.length.toLocaleString("pt-BR")} produto(s) plotado(s)` +
+    (semHistorico ? ` — ${semHistorico.toLocaleString("pt-BR")} de fora por terem só 1 coleta até agora` : "") +
+    ". Clique num ponto para ver o histórico completo.";
+
+  grafico.querySelectorAll("circle[data-url]").forEach(c => {
+    c.addEventListener("click", () => {
+      const produto = PRODUTOS.find(p => p.url === c.dataset.url);
+      if (produto) abrirPainel(produto);
+    });
+  });
+}
+
+document.querySelectorAll(".aba-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".aba-btn").forEach(b => b.classList.remove("ativa"));
+    document.querySelectorAll(".aba-painel").forEach(p => p.classList.remove("ativa"));
+    btn.classList.add("ativa");
+    document.getElementById("aba-" + btn.dataset.aba).classList.add("ativa");
+    if (btn.dataset.aba === "dispersao") renderizarDispersao();
+  });
+});
+document.getElementById("disp-loja").addEventListener("change", renderizarDispersao);
+
 document.getElementById("painel-fechar").addEventListener("click", () => {
   document.getElementById("painel").classList.remove("aberto");
 });
@@ -446,6 +601,7 @@ document.getElementById("btn-proximo").addEventListener("click", () => { estado.
 
 preencherResumo();
 renderizarTabela();
+preencherSeletorDispersao();
 </script>
 </body>
 </html>
