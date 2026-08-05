@@ -13,12 +13,21 @@ import argparse
 import os
 import sys
 
+import truststore
 import yaml
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
 os.chdir(BASE_DIR)
 os.environ.setdefault("SCRAPY_SETTINGS_MODULE", "crawler.settings")
+
+# usa o certificate store do SO (Windows/macOS/Linux) em vez do bundle fixo do
+# certifi -- necessário pra funcionar atrás de proxy corporativo com SSL
+# inspection (a VPN da empresa injeta uma CA própria que o Windows já confia,
+# mas o certifi não), sem isso as chamadas requests (VTEX/html_bulk/
+# itemlist_bulk/descoberta de sitemap) falham com "self-signed certificate
+# in certificate chain"
+truststore.inject_into_ssl()
 
 from crawler.lockutil import adquirir_lock
 from crawler.logging_config import configurar_logging

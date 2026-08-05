@@ -8,3 +8,4 @@ brotli==1.2.0
 requests==2.34.2
 psycopg2-binary==2.9.12
 filelock==3.32.0
+truststore==0.10.4
