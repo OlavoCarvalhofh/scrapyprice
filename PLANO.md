@@ -205,6 +205,29 @@ Deixar o crawler robusto para rodar sem supervisão.
       47.315 registros já coletados desses 5 sites via `scripts/backfill_codigo_peca.py` (sem
       re-crawlear, o código já vinha do texto salvo) -- 46.376 atualizados. 7 testes de regressão
       novos em `tests/test_sync_vtex_brand.py` (47 testes no total)
+- [x] **Rodada "do zero" completa** (31/07 a 02/08) — os 22 sites de `config/sites.yaml` rodados
+      em sequência (batch manual via shell, não Kestra ainda), ~40k+ registros novos no total.
+      Achado operacional: a máquina local sofreu vários hiatos de horas (suspensão/hibernação
+      do Windows durante a madrugada) que pausaram os crawls por até ~7h de cada vez -- na
+      maioria das vezes o processo sobreviveu e retomou sozinho ao acordar, mas uma vez o
+      processo morreu de vez (lock travado, precisou matar+limpar+reiniciar manualmente). Reforça
+      a prioridade da Fase 1 (VPS), que não teria esse problema. `tratorlin` foi movido pro fim
+      da fila a pedido do usuário (catálogo grande, historicamente o mais lento/instável).
+- [x] **dronesense.com.br mapeado** — site Astro (SSG), HTML pré-renderizado com JSON-LD Product
+      completo, sku legível de verdade (ex: "DJI-AGRAS-T25P", não ID interno opaco). Catálogo
+      pequeno de propósito: só 6 páginas de produto (`filtro: ["/drones-agricolas/"]` sobre um
+      sitemap de 747 URLs, maioria blog/calendário agrícola). 3 modelos ativos com preço público
+      (T25P R$110k, T70P R$180k, T100 R$225k) + 3 gerações antigas descontinuadas sem preço
+      (OutOfStock, ignoradas normalmente pelo spider). Sem catálogo de peças avulsas à venda.
+- [x] **fontanatratorpecas.com.br mapeado** — plataforma Magazord (React no front, mas SSR/
+      pré-renderizado: JSON-LD completo direto no HTML, sem precisar Playwright nem seletor CSS
+      apesar da dica inicial do usuário sobre a classe do sku). Loja generalista de peças
+      agrícolas (não só CNH -- também Valtra/Valmet, Jacto, Kuhn), 1826 produtos, sem filtro de
+      marca. Mesmo padrão dos sites VTEX: `sku` do JSON-LD é ID interno da loja, código real do
+      fabricante só existe no texto do nome -- não estendida a heurística `_extrair_codigo_peca`
+      pra esse site ainda (só pedido/feito pro fluxo VTEX até agora).
+- [x] **engepecas.com.br removido** — ver "Sites bloqueados fora das fases" (não era bloqueio
+      deliberado, só 503 pontual no dia; config antiga preservada no histórico do git)
 - [ ] Rodar por alguns dias (já na VPS, via Kestra) e conferir se o histórico está sendo gravado como esperado (série temporal, sem sobrescrita)
 - [x] Relatório de URLs "quebradas" — `crawler/relatorio_falhas.py`, grava
       `logs/urls_quebradas/<site>.json` (URLs sem preço ou com erro de rede na última rodada,
@@ -281,6 +304,11 @@ propósito pela plataforma (diferente dos outros sites, onde era só ajuste téc
 - **usaparts.com.br** — preço só visível com login (B2B), fora de escopo pra scraping público
 - **msequipamentos.com.br** — desafio ativo Cloudflare ("Just a moment...") bloqueando até a
   home e o robots.txt sem navegador real; barreira deliberada, não perseguir
+- **engepecas.com.br** — removido de `config/sites.yaml` e do trigger no Kestra (02/08) a
+  pedido do usuário depois que a última rodada falhou com 503 (site fora do ar na hora do
+  request ao sitemap, não é bloqueio nem bug nosso). Não é caso de bot-block deliberado como
+  os outros dois acima -- se quiser remapear no futuro, é só reaproveitar a config antiga
+  (`metodo: html_bulk`, `filtro: [case, cnh, new-holland]`, ver histórico do git).
 
 ## Backlog (não priorizado)
 - Proxy/rotação de IP — só se algum site começar a bloquear por IP fixo da VPS; não adiantar agora, é over-engineering enquanto não há sinal de bloqueio.

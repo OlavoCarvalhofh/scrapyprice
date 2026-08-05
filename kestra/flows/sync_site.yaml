@@ -96,11 +96,6 @@ triggers:
     cron: "40 5 * * *"
     inputs:
       site: newpecasoficial
-  - id: engepecas_diario
-    type: io.kestra.plugin.core.trigger.Schedule
-    cron: "0 6 * * *"
-    inputs:
-      site: engepecas
   - id: paccini_diario
     type: io.kestra.plugin.core.trigger.Schedule
     cron: "20 6 * * *"

@@ -122,11 +122,6 @@ newpecasoficial:
 
 # ---- HTML bulk (Scrapy bloqueado, usa requests puro) ----
 
-engepecas:
-  metodo: html_bulk
-  domain: https://engepecas.com.br
-  filtro: [case, cnh, new-holland]
-
 agripecas:
   metodo: html_bulk
   domain: https://www.agripecas.net
@@ -231,6 +226,42 @@ paccini:
   # plataforma FBits; páginas /veiculos/marca/modelo listam peças compatíveis
   # via ItemList no JSON-LD, com preço já embutido -- ~20% das páginas têm
   # produto, ~2.6 itens em média quando têm
+
+fontanatratorpecas:
+  metodo: scrapy
+  domain: https://www.fontanatratorpecas.com.br
+  # robots.txt permissivo (só bloqueia login/checkout/filtros de busca, sem
+  # bloqueio de bot). Plataforma Magazord (React no front, mas HTML vem
+  # pré-renderizado no servidor com JSON-LD completo -- sku/preço/brand
+  # direto, sem precisar de seletor CSS apesar do site usar React+Tailwind).
+  # sitemap.xml é um sitemapindex com 5 sub-sitemaps (produto/categorias/
+  # blog/landing-pages/institucional); só o de produto importa (1826 URLs),
+  # os outros (~118 URLs juntos) são visitados mas descartados sem custo
+  # real -- price_spider já ignora página sem preço (ver "sem_preco" no
+  # relatório de falhas). Loja generalista de peças agrícolas (não só CNH --
+  # também Valtra/Valmet, Jacto), sem filtro de marca = catálogo inteiro.
+  # sku do JSON-LD é o ID interno da loja (ex: "17947"), não o código do
+  # fabricante que aparece no título (ex: "5117219") -- mesmo padrão já
+  # visto nos sites VTEX (ver PLANO.md, investigação sku/mpn/codigo_peca);
+  # mpn não é declarado aqui. Se quiser o código real, precisaria da mesma
+  # heurística de extração por texto (_extrair_codigo_peca), hoje só
+  # implementada pro fluxo VTEX.
+
+dronesense:
+  metodo: scrapy
+  domain: https://www.dronesense.com.br
+  filtro: ["/drones-agricolas/"]
+  # robots.txt permissivo, sem bloqueio de bot. Site Astro (SSG) -- HTML já
+  # vem pré-renderizado com JSON-LD Product completo, sku legível de
+  # verdade (ex: "DJI-AGRAS-T25P", não um ID interno opaco -- diferente do
+  # padrão VTEX/Magazord). Sitemap tem 747 URLs (maioria blog/calendário
+  # agrícola por cultura+estado/institucional) -- filtro restringe às 6
+  # páginas de produto (/drones-agricolas/dji-agras-<modelo>). Só T25P,
+  # T70P e T100 têm preço público (kit fechado, venda direta); T25/T40/T50
+  # são gerações anteriores descontinuadas (OutOfStock, sem preço) -- já
+  # tratado normalmente pelo price_spider (ignora item sem preço). Sem
+  # catálogo de peças avulsas à venda (as páginas /pecas/compatibilidade/
+  # são só referência técnica, sem preço nenhum).
 
 # ---- Bloqueados / pendentes (não rodar ainda -- ver PLANO.md) ----
 # rohrmaquinas.com.br -- precisa Playwright (Fase 6)
