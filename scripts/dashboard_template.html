@@ -158,6 +158,11 @@
   .disp-legenda i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
   .disp-info { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
 
+  .secao-titulo { font-size: 14px; font-weight: 600; margin: 24px 0 4px; }
+  .secao-titulo:first-child { margin-top: 0; }
+  .variacao-alta { color: var(--status-critical); font-weight: 600; }
+  .variacao-baixa { color: var(--status-good); font-weight: 600; }
+
   @media (max-width: 640px) {
     table thead { display: none; }
     tbody tr { display: block; border-bottom: 4px solid var(--page-plane); }
@@ -181,6 +186,7 @@
   <div class="abas">
     <button class="aba-btn ativa" id="aba-btn-tabela" data-aba="tabela">Tabela</button>
     <button class="aba-btn" id="aba-btn-dispersao" data-aba="dispersao">Dispersão</button>
+    <button class="aba-btn" id="aba-btn-variacoes" data-aba="variacoes">Variações</button>
   </div>
 
   <div class="aba-painel ativa" id="aba-tabela">
@@ -222,6 +228,36 @@
     </div>
     <div id="disp-grafico"></div>
     <p class="disp-info" id="disp-info"></p>
+  </div>
+
+  <div class="aba-painel" id="aba-variacoes">
+    <p class="secao-titulo">Lojas mais voláteis</p>
+    <p class="disp-info" style="margin-top:0;">Variação mediana (em módulo) entre os produtos que mudaram de preço — só lojas com pelo menos 5 produtos comparáveis.</p>
+    <table>
+      <thead>
+        <tr>
+          <th data-campo-vol="loja">Loja</th>
+          <th data-campo-vol="qtd">Produtos que variaram</th>
+          <th data-campo-vol="mediana">Variação mediana</th>
+        </tr>
+      </thead>
+      <tbody id="corpo-volatilidade"></tbody>
+    </table>
+
+    <p class="secao-titulo">Maiores variações de preço</p>
+    <p class="disp-info" id="info-variacoes" style="margin-top:0;"></p>
+    <table>
+      <thead>
+        <tr>
+          <th data-campo-var="loja">Loja</th>
+          <th data-campo-var="produto">Produto</th>
+          <th data-campo-var="ini">Preço inicial</th>
+          <th data-campo-var="fim">Preço atual</th>
+          <th data-campo-var="pct">Variação</th>
+        </tr>
+      </thead>
+      <tbody id="corpo-variacoes"></tbody>
+    </table>
   </div>
 
   <div class="painel" id="painel">
@@ -556,6 +592,124 @@ function renderizarDispersao() {
   });
 }
 
+// Variações: preço inicial vs. atual de cada produto, e volatilidade por loja.
+// Calculado no cliente a partir de HISTORICO/PRODUTOS já embutidos na página.
+let estadoVar = { ordenarPor: "pct", ordenarAsc: false };
+let estadoVol = { ordenarPor: "mediana", ordenarAsc: false };
+
+function calcularVariacoes() {
+  const resultado = [];
+  for (const p of PRODUTOS) {
+    const url = p.url.toLowerCase();
+    if (url.includes("link") && url.includes("pagamento")) continue; // páginas de cobrança avulsa, não produto
+    const hist = (HISTORICO[p.url] || []).slice().sort((a, b) => new Date(a[0]) - new Date(b[0]));
+    if (hist.length < 2) continue;
+    const ini = hist[0][1], fim = hist[hist.length - 1][1];
+    // preço inicial < R$1 explode o % (costuma ser erro de captura, não repreço real)
+    if (!ini || ini < 1 || ini === fim) continue;
+    const pct = (fim - ini) / ini * 100;
+    resultado.push({ produto: p, ini, fim, pct, absPct: Math.abs(pct) });
+  }
+  return resultado;
+}
+
+function calcularVolatilidadePorLoja(variacoes) {
+  const porLoja = {};
+  for (const v of variacoes) {
+    (porLoja[v.produto.loja] = porLoja[v.produto.loja] || []).push(v.absPct);
+  }
+  const ranking = [];
+  for (const [loja, valores] of Object.entries(porLoja)) {
+    if (valores.length < 5) continue;
+    const ord = [...valores].sort((a, b) => a - b);
+    const meio = Math.floor(ord.length / 2);
+    const mediana = ord.length % 2 === 0 ? (ord[meio - 1] + ord[meio]) / 2 : ord[meio];
+    ranking.push({ loja, qtd: valores.length, mediana });
+  }
+  return ranking;
+}
+
+function renderizarVolatilidade(variacoes) {
+  let ranking = calcularVolatilidadePorLoja(variacoes);
+  const campo = estadoVol.ordenarPor, dir = estadoVol.ordenarAsc ? 1 : -1;
+  ranking.sort((a, b) => {
+    const va = a[campo], vb = b[campo];
+    if (typeof va === "string") return va.localeCompare(vb) * dir;
+    return (va - vb) * dir;
+  });
+
+  const corpo = document.getElementById("corpo-volatilidade");
+  corpo.innerHTML = "";
+  for (const r of ranking) {
+    const tr = document.createElement("tr");
+    tr.style.cursor = "default";
+    tr.innerHTML = `
+      <td data-rotulo="Loja">${r.loja}</td>
+      <td data-rotulo="Produtos que variaram">${r.qtd.toLocaleString("pt-BR")}</td>
+      <td data-rotulo="Variação mediana">${r.mediana.toFixed(1)}%</td>
+    `;
+    corpo.appendChild(tr);
+  }
+}
+
+function renderizarVariacoesTabela(variacoes) {
+  const LIMITE = 150;
+  const campo = estadoVar.ordenarPor, dir = estadoVar.ordenarAsc ? 1 : -1;
+  const lista = [...variacoes].sort((a, b) => {
+    let va, vb;
+    if (campo === "pct") { va = a.absPct; vb = b.absPct; }
+    else if (campo === "loja") { va = a.produto.loja; vb = b.produto.loja; }
+    else if (campo === "produto") { va = (a.produto.produto || "").toLowerCase(); vb = (b.produto.produto || "").toLowerCase(); }
+    else { va = a[campo]; vb = b[campo]; }
+    if (typeof va === "string") return va.localeCompare(vb) * dir;
+    return (va - vb) * dir;
+  });
+  const total = lista.length;
+  const pagina = lista.slice(0, LIMITE);
+
+  const corpo = document.getElementById("corpo-variacoes");
+  corpo.innerHTML = "";
+  for (const v of pagina) {
+    const tr = document.createElement("tr");
+    const classeVar = v.pct > 0 ? "variacao-alta" : "variacao-baixa";
+    tr.innerHTML = `
+      <td data-rotulo="Loja">${v.produto.loja}</td>
+      <td data-rotulo="Produto">${v.produto.produto || "(sem nome)"}</td>
+      <td data-rotulo="Preço inicial" class="preco">${formatarMoeda(v.ini)}</td>
+      <td data-rotulo="Preço atual" class="preco">${formatarMoeda(v.fim)}</td>
+      <td data-rotulo="Variação" class="preco ${classeVar}">${v.pct > 0 ? "+" : ""}${v.pct.toFixed(1)}%</td>
+    `;
+    tr.addEventListener("click", () => abrirPainel(v.produto));
+    corpo.appendChild(tr);
+  }
+  document.getElementById("info-variacoes").textContent =
+    `Mostrando ${pagina.length.toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")} produto(s) com variação de preço` +
+    " (excluídas páginas de link de pagamento e preços iniciais abaixo de R$1). Clique numa linha pra ver o histórico completo.";
+}
+
+function renderizarVariacoes() {
+  const variacoes = calcularVariacoes();
+  renderizarVolatilidade(variacoes);
+  renderizarVariacoesTabela(variacoes);
+}
+
+document.querySelectorAll("[data-campo-vol]").forEach(th => {
+  th.addEventListener("click", () => {
+    const campo = th.dataset.campoVol;
+    if (estadoVol.ordenarPor === campo) estadoVol.ordenarAsc = !estadoVol.ordenarAsc;
+    else { estadoVol.ordenarPor = campo; estadoVol.ordenarAsc = false; }
+    renderizarVolatilidade(calcularVariacoes());
+  });
+});
+document.querySelectorAll("[data-campo-var]").forEach(th => {
+  th.addEventListener("click", () => {
+    const campo = th.dataset.campoVar;
+    if (estadoVar.ordenarPor === campo) estadoVar.ordenarAsc = !estadoVar.ordenarAsc;
+    else { estadoVar.ordenarPor = campo; estadoVar.ordenarAsc = campo === "loja" || campo === "produto"; }
+    renderizarVariacoesTabela(calcularVariacoes());
+  });
+});
+
 document.querySelectorAll(".aba-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".aba-btn").forEach(b => b.classList.remove("ativa"));
@@ -563,6 +717,7 @@ document.querySelectorAll(".aba-btn").forEach(btn => {
     btn.classList.add("ativa");
     document.getElementById("aba-" + btn.dataset.aba).classList.add("ativa");
     if (btn.dataset.aba === "dispersao") renderizarDispersao();
+    if (btn.dataset.aba === "variacoes") renderizarVariacoes();
   });
 });
 document.getElementById("disp-loja").addEventListener("change", renderizarDispersao);
@@ -582,7 +737,7 @@ document.getElementById("toggle-tabela").addEventListener("click", () => {
   document.getElementById("toggle-tabela").textContent = mostrando ? "Ver como tabela" : "Ver como gráfico";
 });
 
-document.querySelectorAll("thead th").forEach(th => {
+document.querySelectorAll("#aba-tabela thead th").forEach(th => {
   th.addEventListener("click", () => {
     const campo = th.dataset.campo;
     if (estado.ordenarPor === campo) estado.ordenarAsc = !estado.ordenarAsc;

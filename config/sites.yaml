@@ -263,6 +263,20 @@ dronesense:
   # catálogo de peças avulsas à venda (as páginas /pecas/compatibilidade/
   # são só referência técnica, sem preço nenhum).
 
+bamaqmaquinas:
+  metodo: scrapy
+  domain: https://loja.bamaqmaquinas.com.br
+  filtro: [case, new-holland, newholland, cnh]
+  # robots.txt totalmente permissivo (Allow: /, sem bloqueio de bot, sem
+  # Crawl-delay). Plataforma Wake Commerce (ex-FBits, mesma família do
+  # paccini) -- JSON-LD Product completo (sku/preço/marca/disponibilidade),
+  # sem precisar de seletor CSS. Loja de peças de linha amarela/construção
+  # CNH (retroescavadeiras, pás-carregadeiras), não agrícola -- catálogo
+  # gigante: 16929 URLs de produto no sitemap, 14944 (88%) já batem o
+  # filtro case/new-holland/cnh (quase tudo é CNH). Rodada grande, deve
+  # levar bem mais de um dia no delay padrão do scrapy (parecido com
+  # tratorlin/realtrator).
+
 # ---- Bloqueados / pendentes (não rodar ainda -- ver PLANO.md) ----
 # rohrmaquinas.com.br -- precisa Playwright (Fase 6)
 # usaparts.com.br -- preço só visível com login, fora de escopo
